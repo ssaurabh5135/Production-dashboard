@@ -70,9 +70,9 @@ except Exception as e:
     st.error(f"[ERROR] Google Auth failed: {e}")
     st.stop()
 
+# --------- FIXED: gspread authorization ---------
 try:
-    client = gspread.Client(auth=creds)
-    client.session = creds.authorized_session()
+    client = gspread.authorize(creds)
     st.success("[OK] GSpread client authorized.")
 except Exception as e:
     st.error(f"[ERROR] GSpread authorization failed: {e}")
