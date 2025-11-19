@@ -10,7 +10,7 @@ import gspread
 st.set_page_config(page_title="Factory Dashboard (Exact Layout)", layout="wide")
 
 IMAGE_PATH = "winter.JPG"  # Your image file path
-SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/1xUsy3nWWuHqOVZi_Q57jatIV78w77wTu/edit"
+SPREADSHEET_ID = "1xUsy3nWWuHqOVZi_Q57jatIV78w77wTu"
 SHEET_NAME = "Dashboard Sheet"
 TARGET_SALE = 1992000000
 
@@ -36,33 +36,30 @@ def format_inr(n):
     ][::-1])
     return rest + last3
 
-# --------- GOOGLE SHEETS DEBUG ---------
+# -------------------- GOOGLE SHEETS ACCESS --------------------
 st.subheader("Google Sheets Diagnostics")
 
 try:
     json_str = st.secrets["gcp_service_account"]["json"]
     st.success("Secrets loaded from Streamlit TOML.")
-    st.text("SERVICE ACCOUNT JSON PREVIEW:")
-    st.code(json_str[:250] + " ...")  # Show start of the JSON
 except Exception as e:
     st.error(f"[ERROR] Could NOT load gcp_service_account from secrets: {e}")
     st.stop()
 
 try:
     creds_dict = json.loads(json_str)
-    private_key_preview = creds_dict.get("private_key", "KEY NOT FOUND")
-    st.text("PRIVATE KEY PREVIEW:")
-    st.code(private_key_preview[:100] + " ...")
     st.success("[OK] Service Account JSON parsed.")
 except Exception as e:
     st.error(f"[ERROR] JSON parsing failed: {e}")
     st.stop()
 
+# Use proper scopes for Sheets + Drive
+SCOPES = [
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/drive"
+]
+
 try:
-    SCOPES = [
-        "https://www.googleapis.com/auth/spreadsheets",
-        "https://www.googleapis.com/auth/drive"
-    ]
     creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
     st.success("[OK] Service Account credentials loaded with proper scopes.")
 except Exception as e:
@@ -76,16 +73,18 @@ except Exception as e:
     st.error(f"[ERROR] GSpread authorization failed: {e}")
     st.stop()
 
-# --------- OPEN SPREADSHEET BY URL ---------
+# -------------------- AUTO-CHECK SPREADSHEET ACCESS --------------------
+st.subheader("Auto-check Spreadsheet Access")
+
 try:
-    sheet = client.open_by_url(SPREADSHEET_URL)
-    st.success(f"[OK] Spreadsheet opened successfully via URL.")
-    st.text("Worksheets: " + ", ".join([w.title for w in sheet.worksheets()]))
+    sheet = client.open_by_key(SPREADSHEET_ID)
+    worksheet_titles = [w.title for w in sheet.worksheets()]
+    st.success(f"Spreadsheet access confirmed! Worksheets: {', '.join(worksheet_titles)}")
 except Exception as e:
-    st.error(f"[ERROR] Spreadsheet access failed: {e}")
+    st.error(f"[ERROR] Cannot access spreadsheet: {e}")
     st.stop()
 
-# --------- LOAD WORKSHEET ---------
+# -------------------- LOAD WORKSHEET --------------------
 try:
     worksheet = sheet.worksheet(SHEET_NAME)
     st.success(f"[OK] Worksheet loaded: {SHEET_NAME}")
@@ -93,6 +92,7 @@ except Exception as e:
     st.error(f"[ERROR] Worksheet load failed: {e}")
     st.stop()
 
+# -------------------- LOAD DATA --------------------
 try:
     data = worksheet.get_all_records()
     st.success(f"[OK] Data loaded ({len(data)} rows).")
@@ -100,10 +100,10 @@ except Exception as e:
     st.error(f"[ERROR] Getting records failed: {e}")
     st.stop()
 
-# --------- DATAFRAME PROCESSING ---------
+# -------------------- DATAFRAME PREP --------------------
 df = pd.DataFrame(data)
 if df.empty:
-    st.error("[ERROR] No data found.")
+    st.error("[ERROR] No data found in the sheet.")
     st.stop()
 
 df.columns = df.columns.str.strip().str.lower()
@@ -134,12 +134,12 @@ total_cum = cum_series.iloc[-1] if not cum_series.empty else 0
 achieved_pct = (total_cum / TARGET_SALE * 100) if TARGET_SALE else 0
 achieved_pct_val = round(achieved_pct, 2)
 
-# --------- COLORS ---------
+# -------------------- COLORS --------------------
 BUTTERFLY_ORANGE = "#fc7d1b"
 BLUE = "#228be6"
 GREEN = "#009e4f"
 
-# --------- GAUGE ---------
+# -------------------- GAUGE --------------------
 gauge = go.Figure(go.Indicator(
     mode="gauge",
     value=achieved_pct_val,
@@ -147,7 +147,8 @@ gauge = go.Figure(go.Indicator(
     domain={'x': [0, 1], 'y': [0, 1]},
     gauge={
         "shape": "angular",
-        "axis": {"range": [0, 100], "tickvals": [0, 25, 50, 75, 100], "ticktext": ["0%", "25%", "50%", "75%", "100%"]},
+        "axis": {"range": [0, 100], "tickvals": [0, 25, 50, 75, 100],
+                 "ticktext": ["0%", "25%", "50%", "75%", "100%"]},
         "bar": {"color": GREEN, "thickness": 0.38},
         "bgcolor": "rgba(0,0,0,0)",
         "steps": [
@@ -167,9 +168,9 @@ gauge.update_layout(
 )
 gauge_html = gauge.to_html(include_plotlyjs='cdn', full_html=False)
 
-# --------- OPTIONAL: Load Sales Report tab ---------
+# -------------------- OPTIONAL SALES REPORT --------------------
 try:
-    sales_sheet = sheet.worksheet("Sales Report")
+    sales_sheet = client.open_by_key(SPREADSHEET_ID).worksheet("Sales Report")
     sr_data = sales_sheet.get_all_records()
     sr = pd.DataFrame(sr_data)
     sr.columns = sr.columns.str.strip().str.lower()
@@ -181,7 +182,6 @@ except Exception as e:
     sale_df = pd.DataFrame({"date": df[date_col], "sale amount": df[today_col]})
     rej_df = pd.DataFrame({"date": df[date_col], "rej amt": df[rej_day_col]})
 
-# --------- PROCESS SALES & REJECTION DATA ---------
 sale_df['date'] = pd.to_datetime(sale_df['date'], errors='coerce')
 sale_df['sale amount'] = pd.to_numeric(sale_df['sale amount'], errors='coerce').fillna(0)
 sale_df = sale_df.dropna(subset=['date']).sort_values('date')
@@ -192,53 +192,9 @@ rej_amt_col = rej_df_col[0] if rej_df_col else rej_df.columns[1] if len(rej_df.c
 rej_df['rej amt'] = pd.to_numeric(rej_df[rej_amt_col], errors='coerce').fillna(0)
 rej_df = rej_df.dropna(subset=['date']).sort_values('date')
 
-# --------- PLOTLY FIGURES ---------
-fig_sale = go.Figure()
-fig_sale.add_trace(go.Bar(
-    x=sale_df['date'], y=sale_df['sale amount'], marker_color=BLUE
-))
-fig_sale.update_layout(
-    title="",
-    margin=dict(t=20,b=40,l=10,r=10),
-    paper_bgcolor="rgba(0,0,0,0)",
-    plot_bgcolor="rgba(0,0,0,0)",
-    height=135,
-    autosize=True,
-    xaxis=dict(showgrid=False, tickfont=dict(size=12), tickangle=-45, automargin=True),
-    yaxis=dict(showgrid=False, tickfont=dict(size=12), automargin=True)
-)
-sale_html = fig_sale.to_html(include_plotlyjs=False, full_html=False)
-
-fig_rej = go.Figure()
-fig_rej.add_trace(go.Scatter(
-    x=rej_df['date'], y=rej_df['rej amt'],
-    mode='lines+markers',
-    marker=dict(size=8, color=BUTTERFLY_ORANGE),
-    line=dict(width=3, color=BUTTERFLY_ORANGE),
-))
-fig_rej.update_layout(
-    title="",
-    margin=dict(t=20,b=40,l=10,r=10),
-    paper_bgcolor="rgba(0,0,0,0)",
-    plot_bgcolor="rgba(0,0,0,0)",
-    height=135,
-    autosize=True,
-    xaxis=dict(showgrid=False, tickfont=dict(size=12), tickangle=-45, automargin=True),
-    yaxis=dict(showgrid=False, tickfont=dict(size=12), automargin=True)
-)
-rej_html = fig_rej.to_html(include_plotlyjs=False, full_html=False)
-
-# --------- BACKGROUND IMAGE ---------
+# -------------------- HTML TEMPLATE --------------------
 bg_b64 = load_image_base64(IMAGE_PATH)
 bg_url = f"data:image/png;base64,{bg_b64}" if bg_b64 else ""
-
-# --------- HTML DASHBOARD ---------
-center_html = f"""
-<div class="center-content" style='width:100%;height:100%;'>
-  <div class="value-green">{achieved_pct_val}%</div>
-  <div class="title-green">Achieved %</div>
-</div>
-"""
 
 top_date = latest[date_col].strftime("%d-%b-%Y")
 top_today_sale = format_inr(today_sale)
@@ -247,15 +203,23 @@ left_rej_pct = f"{round(rej_pct if not pd.isna(rej_pct) else 0,1)}%"
 left_rej_day = format_inr(rej_day)
 bottom_rej_cum = format_inr(rej_cum)
 
+center_html = f"""
+<div class="center-content" style='width:100%;height:100%;'>
+  <div class="value-green">{achieved_pct_val}%</div>
+  <div class="title-green">Achieved %</div>
+</div>
+"""
+
 html_template = f"""
 <!doctype html>
 <html>
 <head>
 <meta charset="utf-8">
-<!-- ... styles unchanged ... -->
 </head>
 <body>
-<!-- ... dashboard unchanged ... -->
+<div style="width:100%; text-align:center;">
+  {center_html}
+</div>
 </body>
 </html>
 """
