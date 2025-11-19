@@ -9,7 +9,7 @@ import gspread
 
 st.set_page_config(page_title="Factory Dashboard (Exact Layout)", layout="wide")
 
-IMAGE_PATH = "winter.JPG" # Your image file path
+IMAGE_PATH = "winter.JPG"  # Your image file path
 SPREADSHEET_ID = "1xUsy3nWWuHqOVZi_Q57jatIV78w77wTu"
 SHEET_NAME = "Dashboard Sheet"
 TARGET_SALE = 1992000000
@@ -43,7 +43,7 @@ try:
     json_str = st.secrets["gcp_service_account"]["json"]
     st.success("Secrets loaded from Streamlit TOML.")
     st.text("SERVICE ACCOUNT JSON PREVIEW:")
-    st.code(json_str[:250] + " ...") # Show start of the JSON
+    st.code(json_str[:250] + " ...")  # Show start of the JSON
 except Exception as e:
     st.error(f"[ERROR] Could NOT load gcp_service_account from secrets: {e}")
     st.stop()
@@ -58,15 +58,21 @@ except Exception as e:
     st.error(f"[ERROR] JSON parsing failed: {e}")
     st.stop()
 
+# --------- FIXED: Create credentials with proper scopes ---------
 try:
-    creds = Credentials.from_service_account_info(creds_dict)
-    st.success("[OK] Service Account credentials loaded.")
+    SCOPES = [
+        "https://www.googleapis.com/auth/spreadsheets",
+        "https://www.googleapis.com/auth/drive"
+    ]
+    creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
+    st.success("[OK] Service Account credentials loaded with proper scopes.")
 except Exception as e:
     st.error(f"[ERROR] Google Auth failed: {e}")
     st.stop()
 
 try:
-    client = gspread.authorize(creds)
+    client = gspread.Client(auth=creds)
+    client.session = creds.authorized_session()
     st.success("[OK] GSpread client authorized.")
 except Exception as e:
     st.error(f"[ERROR] GSpread authorization failed: {e}")
@@ -93,6 +99,7 @@ except Exception as e:
     st.error(f"[ERROR] Getting records failed: {e}")
     st.stop()
 
+# --------- Data preparation ---------
 df = pd.DataFrame(data)
 if df.empty:
     st.error("[ERROR] No data found.")
@@ -126,10 +133,12 @@ total_cum = cum_series.iloc[-1] if not cum_series.empty else 0
 achieved_pct = (total_cum / TARGET_SALE * 100) if TARGET_SALE else 0
 achieved_pct_val = round(achieved_pct, 2)
 
+# --------- Colors ---------
 BUTTERFLY_ORANGE = "#fc7d1b"
 BLUE = "#228be6"
 GREEN = "#009e4f"
 
+# --------- Gauge plot ---------
 gauge = go.Figure(go.Indicator(
     mode="gauge",
     value=achieved_pct_val,
@@ -157,7 +166,7 @@ gauge.update_layout(
 )
 gauge_html = gauge.to_html(include_plotlyjs='cdn', full_html=False)
 
-# --------- OPTIONAL: Load Sales Report tab ---------
+# --------- Optional Sales Report ---------
 try:
     sales_sheet = client.open_by_key(SPREADSHEET_ID).worksheet("Sales Report")
     sr_data = sales_sheet.get_all_records()
@@ -181,6 +190,7 @@ rej_amt_col = rej_df_col[0] if rej_df_col else rej_df.columns[1] if len(rej_df.c
 rej_df['rej amt'] = pd.to_numeric(rej_df[rej_amt_col], errors='coerce').fillna(0)
 rej_df = rej_df.dropna(subset=['date']).sort_values('date')
 
+# --------- Sales and Rejection Figures ---------
 fig_sale = go.Figure()
 fig_sale.add_trace(go.Bar(
     x=sale_df['date'], y=sale_df['sale amount'], marker_color=BLUE
@@ -191,7 +201,6 @@ fig_sale.update_layout(
     paper_bgcolor="rgba(0,0,0,0)",
     plot_bgcolor="rgba(0,0,0,0)",
     height=135,
-    width=None,
     autosize=True,
     xaxis=dict(showgrid=False, tickfont=dict(size=12), tickangle=-45, automargin=True),
     yaxis=dict(showgrid=False, tickfont=dict(size=12), automargin=True)
@@ -211,16 +220,17 @@ fig_rej.update_layout(
     paper_bgcolor="rgba(0,0,0,0)",
     plot_bgcolor="rgba(0,0,0,0)",
     height=135,
-    width=None,
     autosize=True,
     xaxis=dict(showgrid=False, tickfont=dict(size=12), tickangle=-45, automargin=True),
     yaxis=dict(showgrid=False, tickfont=dict(size=12), automargin=True)
 )
 rej_html = fig_rej.to_html(include_plotlyjs=False, full_html=False)
 
+# --------- Background image ---------
 bg_b64 = load_image_base64(IMAGE_PATH)
 bg_url = f"data:image/png;base64,{bg_b64}" if bg_b64 else ""
 
+# --------- HTML Template ---------
 center_html = f"""
 <div class="center-content" style='width:100%;height:100%;'>
   <div class="value-green">{achieved_pct_val}%</div>
@@ -240,10 +250,15 @@ html_template = f"""
 <html>
 <head>
 <meta charset="utf-8">
-<!-- ... styles unchanged ... -->
+<!-- Add your CSS and styling here as needed -->
 </head>
-<body>
-<!-- ... dashboard unchanged ... -->
+<body style='background-image:url("{bg_url}");background-size:cover;background-repeat:no-repeat;'>
+  <!-- Example: center achieved % -->
+  {center_html}
+  <!-- You can insert Plotly figures using iframe or divs -->
+  <div>{gauge_html}</div>
+  <div>{sale_html}</div>
+  <div>{rej_html}</div>
 </body>
 </html>
 """
