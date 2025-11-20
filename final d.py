@@ -91,18 +91,25 @@ except Exception as e:
 
 # ------------------ LOAD DATA FROM SHEET (READ ONLY A1:H) ------------------
 try:
-    # Read EXACT fixed range → ignores helper columns in G3/S3
     rows = worksheet.get_values('A1:H')
 
     if not rows or len(rows) < 2:
         st.error("[ERROR] Dashboard sheet has no usable data in A1:H.")
         st.stop()
 
-    header = rows[0]                  # A1 to H1
-    data_rows = rows[1:]              # Data from row 2 downward
+    header = rows[0]                  # A1–H1
+    data_rows = rows[1:]              # rows after header
+
+    # Build list of dictionaries
     data = [dict(zip(header, r)) for r in data_rows]
 
-    st.success(f"[OK] Data loaded from '{DASHBOARD_SHEET}' (strict A1:H mode, {len(data)} rows).")
+    # 🔥 CRITICAL FIX → Convert to DataFrame
+    df = pd.DataFrame(data)
+
+    # Ensure header names are strings
+    df.columns = [str(c) for c in df.columns]
+
+    st.success(f"[OK] Data loaded from '{DASHBOARD_SHEET}' (strict A1:H mode, {len(df)} rows).")
 
 except Exception as e:
     st.error(f"[ERROR] Failed reading A1:H from Dashboard: {e}")
@@ -457,4 +464,5 @@ body {{
 """
 
 st.components.v1.html(html_template, height=770, scrolling=True)
+
 
