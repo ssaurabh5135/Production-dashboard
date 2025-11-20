@@ -10,7 +10,7 @@ from google.oauth2.service_account import Credentials
 st.set_page_config(page_title="Factory Dashboard (Exact Layout)", layout="wide")
 
 # ------------------ CONFIG ------------------
-IMAGE_PATH = "winter.JPG"
+IMAGE_PATH = "winter.jpg"
 # Google Sheets: use the converted Google Sheets ID you provided
 SPREADSHEET_ID = "168UoOWdTfOBxBvy_4QGymfiIRimSO2OoJdnzBDRPLvk"
 # worksheet names
@@ -464,5 +464,6 @@ body {{
 """
 
 st.components.v1.html(html_template, height=770, scrolling=True)
+
 
 
