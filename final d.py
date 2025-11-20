@@ -10,7 +10,9 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 st.set_page_config(page_title="Factory Dashboard (Exact Layout)", layout="wide")
 
 IMAGE_PATH = "winter.JPG"
-SPREADSHEET_NAME = "Your Spreadsheet Name"  # <-- Change this to your sheet name
+
+# Use the exact **name of your new spreadsheet** (from the new Google account)
+SPREADSHEET_NAME = "production sheet"  # <-- Replace with your new sheet's name
 SHEET_NAME = "Dashboard Sheet"
 TARGET_SALE = 1992000000
 
@@ -41,7 +43,7 @@ try:
     SCOPES = ["https://www.googleapis.com/auth/spreadsheets",
               "https://www.googleapis.com/auth/drive"]
 
-    # This opens a browser for you to login to your Google account
+    # This will open a browser for you to login to your new Google account
     flow = InstalledAppFlow.from_client_secrets_file("credentials.json", SCOPES)
     creds = flow.run_local_server(port=0)
 
@@ -144,64 +146,7 @@ gauge.update_layout(
 )
 gauge_html = gauge.to_html(include_plotlyjs='cdn', full_html=False)
 
-# ------------------ LOAD SALES REPORT TAB (OPTIONAL) ------------------
-try:
-    sales_sheet = sheet.worksheet("Sales Report")
-    sr_data = sales_sheet.get_all_records()
-    sr = pd.DataFrame(sr_data)
-    sr.columns = sr.columns.str.strip().str.lower()
-    sale_df = sr[sr['table_name'].str.lower() == 'sale_summery'] if 'table_name' in sr.columns else sr
-    rej_df = sr[sr['table_name'].str.lower() == 'rejection_summery'] if 'table_name' in sr.columns else sr
-    st.success("[OK] Sales Report data loaded.")
-except Exception as e:
-    st.warning(f"[Warning] Loading Sales Report failed ({e}), using fallback from Dashboard Sheet.")
-    sale_df = pd.DataFrame({"date": df[date_col], "sale amount": df[today_col]})
-    rej_df = pd.DataFrame({"date": df[date_col], "rej amt": df[rej_day_col]})
-
-# ------------------ DATA CLEANUP FOR CHARTS ------------------
-sale_df['date'] = pd.to_datetime(sale_df['date'], errors='coerce')
-sale_df['sale amount'] = pd.to_numeric(sale_df['sale amount'], errors='coerce').fillna(0)
-sale_df = sale_df.dropna(subset=['date']).sort_values('date')
-
-rej_df['date'] = pd.to_datetime(rej_df['date'], errors='coerce')
-rej_df_col = rej_df.columns[rej_df.columns.str.contains('rej')].tolist()
-rej_amt_col = rej_df_col[0] if rej_df_col else rej_df.columns[1] if len(rej_df.columns) > 1 else rej_df.columns[0]
-rej_df['rej amt'] = pd.to_numeric(rej_df[rej_amt_col], errors='coerce').fillna(0)
-rej_df = rej_df.dropna(subset=['date']).sort_values('date')
-
-# ------------------ PLOTLY FIGURES ------------------
-fig_sale = go.Figure()
-fig_sale.add_trace(go.Bar(x=sale_df['date'], y=sale_df['sale amount'], marker_color=BLUE))
-fig_sale.update_layout(
-    margin=dict(t=20,b=40,l=10,r=10),
-    paper_bgcolor="rgba(0,0,0,0)",
-    plot_bgcolor="rgba(0,0,0,0)",
-    height=135,
-    autosize=True,
-    xaxis=dict(showgrid=False, tickfont=dict(size=12), tickangle=-45),
-    yaxis=dict(showgrid=False, tickfont=dict(size=12))
-)
-sale_html = fig_sale.to_html(include_plotlyjs=False, full_html=False)
-
-fig_rej = go.Figure()
-fig_rej.add_trace(go.Scatter(
-    x=rej_df['date'], y=rej_df['rej amt'],
-    mode='lines+markers',
-    marker=dict(size=8, color=BUTTERFLY_ORANGE),
-    line=dict(width=3, color=BUTTERFLY_ORANGE),
-))
-fig_rej.update_layout(
-    margin=dict(t=20,b=40,l=10,r=10),
-    paper_bgcolor="rgba(0,0,0,0)",
-    plot_bgcolor="rgba(0,0,0,0)",
-    height=135,
-    autosize=True,
-    xaxis=dict(showgrid=False, tickfont=dict(size=12), tickangle=-45),
-    yaxis=dict(showgrid=False, tickfont=dict(size=12))
-)
-rej_html = fig_rej.to_html(include_plotlyjs=False, full_html=False)
-
-# ------------------ LOAD BACKGROUND IMAGE ------------------
+# ------------------ BACKGROUND IMAGE ------------------
 bg_b64 = load_image_base64(IMAGE_PATH)
 bg_url = f"data:image/png;base64,{bg_b64}" if bg_b64 else ""
 
@@ -227,8 +172,6 @@ html_template = f"""
 </head>
 <body>
 <div>{center_html}</div>
-<div>{sale_html}</div>
-<div>{rej_html}</div>
 </body>
 </html>
 """
