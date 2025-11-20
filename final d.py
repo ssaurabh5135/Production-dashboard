@@ -13,7 +13,7 @@ IMAGE_PATH = "winter.JPG"
 
 # 🔥 USE YOUR NEW GOOGLE SHEET ID
 SPREADSHEET_ID = "168UoOWdTfOBxBvy_4QGymfiIRimSO2OoJdnzBDRPLvk"
-SHEET_NAME = "Dashboard Sheet"
+SHEET_NAME = "Dashboard"
 TARGET_SALE = 1992000000
 
 # ------------------ IMAGE HANDLER ------------------
@@ -128,3 +128,4 @@ html_template = f"""
 """
 
 st.components.v1.html(html_template, height=200)
+
