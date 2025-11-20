@@ -2,16 +2,17 @@ import streamlit as st
 import gspread
 from google.oauth2.service_account import Credentials
 
-st.title("Service Account Debug")
+st.title("Service Account Debug (Secrets)")
 
-# ------------------ Load Service Account ------------------
+# ------------------ Load Service Account from Streamlit secrets ------------------
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets",
           "https://www.googleapis.com/auth/drive"]
 
 try:
-    creds = Credentials.from_service_account_file("credentials.json", scopes=SCOPES)
+    creds_dict = st.secrets["gcp_service_account"]
+    creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
     client = gspread.authorize(creds)
-    st.success("✅ Service Account authorized")
+    st.success("✅ Service Account authorized via Secrets")
 except Exception as e:
     st.error(f"❌ Authorization failed: {e}")
     st.stop()
