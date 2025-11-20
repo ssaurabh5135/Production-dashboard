@@ -7,15 +7,19 @@ import json
 from google.oauth2.service_account import Credentials
 import gspread
 
-# ------------------ CONFIG ------------------
+# ----------- CONFIG ----------
 st.set_page_config(page_title="Factory Dashboard (Exact Layout)", layout="wide")
 
-IMAGE_PATH = "winter.JPG"  # Background image path
-SPREADSHEET_ID = "1xUsy3nWWuHqOVZi_Q57jatIV78w77wTu"  # production sheet (4)
-SHEET_NAME = "Dashboard Sheet"  # Worksheet tab name
+IMAGE_PATH = "winter.JPG"  # Your image file path
+SPREADSHEET_ID = "1xUsy3nWWuHqOVZi_Q57jatIV78w77wTu"
+SHEET_NAME = "Dashboard Sheet"
 TARGET_SALE = 1992000000
 
-# ------------------ HELPER FUNCTIONS ------------------
+BUTTERFLY_ORANGE = "#fc7d1b"
+BLUE = "#228be6"
+GREEN = "#009e4f"
+
+# ----------- HELPER FUNCTIONS ----------
 def load_image_base64(path):
     try:
         data = Path(path).read_bytes()
@@ -33,40 +37,32 @@ def format_inr(n):
         return x
     last3 = x[-3:]
     rest = x[:-3]
-    rest = ''.join([
-        rest[::-1][i:i+2][::-1] + ',' for i in range(0, len(rest), 2)
-    ][::-1])
+    rest = ''.join([rest[::-1][i:i+2][::-1] + ',' for i in range(0, len(rest), 2)][::-1])
     return rest + last3
 
-# ------------------ GOOGLE SHEETS AUTH ------------------
+# ----------- STEP 1: LOAD SERVICE ACCOUNT ----------
 st.subheader("Google Sheets Diagnostics")
-
 try:
     json_str = st.secrets["gcp_service_account"]["json"]
-    st.success("Secrets loaded from Streamlit TOML.")
-except Exception as e:
-    st.error(f"[ERROR] Could NOT load gcp_service_account from secrets: {e}")
-    st.stop()
-
-try:
     creds_dict = json.loads(json_str)
-    private_key_preview = creds_dict.get("private_key", "KEY NOT FOUND")
-    st.text("PRIVATE KEY PREVIEW:")
-    st.code(private_key_preview[:100] + " ...")
-    st.success("[OK] Service Account JSON parsed.")
+    st.success("[OK] Secrets loaded and JSON parsed.")
 except Exception as e:
-    st.error(f"[ERROR] JSON parsing failed: {e}")
+    st.error(f"[ERROR] Could not load service account secrets: {e}")
     st.stop()
 
+# ----------- STEP 2: CREATE CREDENTIALS WITH SCOPES ----------
 try:
-    SCOPES = ["https://www.googleapis.com/auth/spreadsheets",
-              "https://www.googleapis.com/auth/drive"]
+    SCOPES = [
+        "https://www.googleapis.com/auth/spreadsheets",
+        "https://www.googleapis.com/auth/drive"
+    ]
     creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
-    st.success("[OK] Service Account credentials loaded with proper scopes.")
+    st.success("[OK] Service Account credentials created with proper scopes.")
 except Exception as e:
-    st.error(f"[ERROR] Google Auth failed: {e}")
+    st.error(f"[ERROR] Could not create credentials: {e}")
     st.stop()
 
+# ----------- STEP 3: AUTHORIZE GSPREAD CLIENT ----------
 try:
     client = gspread.authorize(creds)
     st.success("[OK] GSpread client authorized.")
@@ -74,29 +70,34 @@ except Exception as e:
     st.error(f"[ERROR] GSpread authorization failed: {e}")
     st.stop()
 
-# ------------------ VERIFY SPREADSHEET ACCESS ------------------
+# ----------- STEP 4: OPEN SPREADSHEET ----------
 try:
     sheet = client.open_by_key(SPREADSHEET_ID)
-    worksheet = sheet.worksheet(SHEET_NAME)
-    st.success(f"[OK] Spreadsheet and worksheet access verified: {worksheet.title}")
+    st.success(f"[OK] Spreadsheet accessed by ID: {SPREADSHEET_ID}")
 except Exception as e:
-    st.error(f"[ERROR] Cannot access spreadsheet or worksheet: {e}")
+    st.error(f"[ERROR] Cannot access spreadsheet: {e}")
     st.stop()
 
-# ------------------ LOAD DATA ------------------
+# ----------- STEP 5: OPEN WORKSHEET ----------
+try:
+    worksheet = sheet.worksheet(SHEET_NAME)
+    st.success(f"[OK] Worksheet accessed: {SHEET_NAME}")
+except Exception as e:
+    st.error(f"[ERROR] Cannot access worksheet '{SHEET_NAME}': {e}")
+    st.stop()
+
+# ----------- STEP 6: LOAD DATA ----------
 try:
     data = worksheet.get_all_records()
+    if not data:
+        st.error("[ERROR] Worksheet is empty.")
+        st.stop()
     st.success(f"[OK] Data loaded ({len(data)} rows).")
 except Exception as e:
     st.error(f"[ERROR] Getting records failed: {e}")
     st.stop()
 
 df = pd.DataFrame(data)
-if df.empty:
-    st.error("[ERROR] No data found.")
-    st.stop()
-
-# ------------------ DATA CLEANUP ------------------
 df.columns = df.columns.str.strip().str.lower()
 df[df.columns[0]] = pd.to_datetime(df[df.columns[0]], errors='coerce')
 df = df.dropna(axis=0, subset=[df.columns[0]])
@@ -121,25 +122,18 @@ rej_pct = latest[rej_pct_col] * 100 if latest[rej_pct_col] < 5 else latest[rej_p
 rej_cum = latest[rej_cum_col]
 cum_series = df[total_cum_col].dropna()
 total_cum = cum_series.iloc[-1] if not cum_series.empty else 0
-
 achieved_pct = (total_cum / TARGET_SALE * 100) if TARGET_SALE else 0
 achieved_pct_val = round(achieved_pct, 2)
 
-# ------------------ COLORS ------------------
-BUTTERFLY_ORANGE = "#fc7d1b"
-BLUE = "#228be6"
-GREEN = "#009e4f"
-
-# ------------------ KPI GAUGE ------------------
+# ----------- STEP 7: GAUGE PLOT -----------
 gauge = go.Figure(go.Indicator(
     mode="gauge",
     value=achieved_pct_val,
-    number={'suffix': "%", 'font': {"size": 44, "color": GREEN}},
+    number={'suffix': "%", 'font': {"size": 44, "color": GREEN, "family": "Poppins", "weight": "bold"}},
     domain={'x': [0, 1], 'y': [0, 1]},
     gauge={
         "shape": "angular",
-        "axis": {"range": [0, 100], "tickvals": [0, 25, 50, 75, 100],
-                 "ticktext": ["0%", "25%", "50%", "75%", "100%"]},
+        "axis": {"range": [0, 100]},
         "bar": {"color": GREEN, "thickness": 0.38},
         "bgcolor": "rgba(0,0,0,0)",
         "steps": [
@@ -157,9 +151,12 @@ gauge.update_layout(
     height=170,
     width=300
 )
-gauge_html = gauge.to_html(include_plotlyjs='cdn', full_html=False)
 
-# ------------------ LOAD SALES REPORT TAB (OPTIONAL) ------------------
+# ----------- STEP 8: LOAD BACKGROUND IMAGE ----------
+bg_b64 = load_image_base64(IMAGE_PATH)
+bg_url = f"data:image/png;base64,{bg_b64}" if bg_b64 else ""
+
+# ----------- STEP 9: OPTIONAL SALES REPORT ----------
 try:
     sales_sheet = client.open_by_key(SPREADSHEET_ID).worksheet("Sales Report")
     sr_data = sales_sheet.get_all_records()
@@ -169,11 +166,10 @@ try:
     rej_df = sr[sr['table_name'].str.lower() == 'rejection_summery'] if 'table_name' in sr.columns else sr
     st.success("[OK] Sales Report data loaded.")
 except Exception as e:
-    st.warning(f"[Warning] Loading Sales Report failed ({e}), using fallback from Dashboard Sheet.")
+    st.warning(f"[Warning] Loading Sales Report failed ({e}), fallback from Dashboard Sheet.")
     sale_df = pd.DataFrame({"date": df[date_col], "sale amount": df[today_col]})
     rej_df = pd.DataFrame({"date": df[date_col], "rej amt": df[rej_day_col]})
 
-# ------------------ DATA CLEANUP FOR CHARTS ------------------
 sale_df['date'] = pd.to_datetime(sale_df['date'], errors='coerce')
 sale_df['sale amount'] = pd.to_numeric(sale_df['sale amount'], errors='coerce').fillna(0)
 sale_df = sale_df.dropna(subset=['date']).sort_values('date')
@@ -184,57 +180,48 @@ rej_amt_col = rej_df_col[0] if rej_df_col else rej_df.columns[1] if len(rej_df.c
 rej_df['rej amt'] = pd.to_numeric(rej_df[rej_amt_col], errors='coerce').fillna(0)
 rej_df = rej_df.dropna(subset=['date']).sort_values('date')
 
-# ------------------ PLOTLY FIGURES ------------------
-fig_sale = go.Figure()
-fig_sale.add_trace(go.Bar(
-    x=sale_df['date'], y=sale_df['sale amount'], marker_color=BLUE
-))
+# ----------- STEP 10: PLOT SALES AND REJECTION ----------
+fig_sale = go.Figure(go.Bar(x=sale_df['date'], y=sale_df['sale amount'], marker_color=BLUE))
 fig_sale.update_layout(
+    title="",
     margin=dict(t=20,b=40,l=10,r=10),
     paper_bgcolor="rgba(0,0,0,0)",
     plot_bgcolor="rgba(0,0,0,0)",
     height=135,
-    autosize=True,
-    xaxis=dict(showgrid=False, tickfont=dict(size=12), tickangle=-45),
-    yaxis=dict(showgrid=False, tickfont=dict(size=12))
+    xaxis=dict(showgrid=False, tickfont=dict(size=12), tickangle=-45, automargin=True),
+    yaxis=dict(showgrid=False, tickfont=dict(size=12), automargin=True)
 )
-sale_html = fig_sale.to_html(include_plotlyjs=False, full_html=False)
 
-fig_rej = go.Figure()
-fig_rej.add_trace(go.Scatter(
+fig_rej = go.Figure(go.Scatter(
     x=rej_df['date'], y=rej_df['rej amt'],
     mode='lines+markers',
     marker=dict(size=8, color=BUTTERFLY_ORANGE),
-    line=dict(width=3, color=BUTTERFLY_ORANGE),
+    line=dict(width=3, color=BUTTERFLY_ORANGE)
 ))
 fig_rej.update_layout(
+    title="",
     margin=dict(t=20,b=40,l=10,r=10),
     paper_bgcolor="rgba(0,0,0,0)",
     plot_bgcolor="rgba(0,0,0,0)",
     height=135,
-    autosize=True,
-    xaxis=dict(showgrid=False, tickfont=dict(size=12), tickangle=-45),
-    yaxis=dict(showgrid=False, tickfont=dict(size=12))
+    xaxis=dict(showgrid=False, tickfont=dict(size=12), tickangle=-45, automargin=True),
+    yaxis=dict(showgrid=False, tickfont=dict(size=12), automargin=True)
 )
-rej_html = fig_rej.to_html(include_plotlyjs=False, full_html=False)
 
-# ------------------ LOAD BACKGROUND IMAGE ------------------
-bg_b64 = load_image_base64(IMAGE_PATH)
-bg_url = f"data:image/png;base64,{bg_b64}" if bg_b64 else ""
-
-# ------------------ HTML TEMPLATE ------------------
-top_date = latest[date_col].strftime("%d-%b-%Y")
-top_today_sale = format_inr(today_sale)
-top_oee = f"{round(oee if not pd.isna(oee) else 0, 1)}%"
-left_rej_pct = f"{round(rej_pct if not pd.isna(rej_pct) else 0,1)}%"
-left_rej_day = format_inr(rej_day)
-bottom_rej_cum = format_inr(rej_cum)
+# ----------- STEP 11: DASHBOARD HTML ----------
 center_html = f"""
 <div class="center-content" style='width:100%;height:100%;'>
   <div class="value-green">{achieved_pct_val}%</div>
   <div class="title-green">Achieved %</div>
 </div>
 """
+
+top_date = latest[date_col].strftime("%d-%b-%Y")
+top_today_sale = format_inr(today_sale)
+top_oee = f"{round(oee if not pd.isna(oee) else 0, 1)}%"
+left_rej_pct = f"{round(rej_pct if not pd.isna(rej_pct) else 0,1)}%"
+left_rej_day = format_inr(rej_day)
+bottom_rej_cum = format_inr(rej_cum)
 
 html_template = f"""
 <!doctype html>
@@ -243,12 +230,21 @@ html_template = f"""
 <meta charset="utf-8">
 </head>
 <body>
-<!-- Embed your Plotly figures and dashboard layout here -->
-<div>{center_html}</div>
-<div>{sale_html}</div>
-<div>{rej_html}</div>
+<div>
+{center_html}
+<p>Date: {top_date}</p>
+<p>Today's Sale: {top_today_sale}</p>
+<p>OEE: {top_oee}</p>
+<p>Rejection %: {left_rej_pct}</p>
+<p>Rejection Day: {left_rej_day}</p>
+<p>Cumulative Rejection: {bottom_rej_cum}</p>
+</div>
 </body>
 </html>
 """
 
+# ----------- STEP 12: RENDER -----------
 st.components.v1.html(html_template, height=770, scrolling=True)
+st.plotly_chart(gauge)
+st.plotly_chart(fig_sale)
+st.plotly_chart(fig_rej)
