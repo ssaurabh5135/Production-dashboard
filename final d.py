@@ -89,19 +89,24 @@ except Exception as e:
     st.error(f"[ERROR] Cannot access worksheet '{DASHBOARD_SHEET}': {e}")
     st.stop()
 
-# ------------------ LOAD DATA FROM SHEET ------------------
+# ------------------ LOAD DATA FROM SHEET (READ ONLY A1:H) ------------------
 try:
-    data = worksheet.get_all_records()
-    st.success(f"[OK] Data loaded from '{DASHBOARD_SHEET}' ({len(data)} rows).")
+    # Read EXACT fixed range → ignores helper columns in G3/S3
+    rows = worksheet.get_values('A1:H')
+
+    if not rows or len(rows) < 2:
+        st.error("[ERROR] Dashboard sheet has no usable data in A1:H.")
+        st.stop()
+
+    header = rows[0]                  # A1 to H1
+    data_rows = rows[1:]              # Data from row 2 downward
+    data = [dict(zip(header, r)) for r in data_rows]
+
+    st.success(f"[OK] Data loaded from '{DASHBOARD_SHEET}' (strict A1:H mode, {len(data)} rows).")
+
 except Exception as e:
-    st.error(f"[ERROR] Getting records from '{DASHBOARD_SHEET}' failed: {e}")
+    st.error(f"[ERROR] Failed reading A1:H from Dashboard: {e}")
     st.stop()
-
-df = pd.DataFrame(data)
-if df.empty:
-    st.error("[ERROR] No data found in the Dashboard sheet.")
-    st.stop()
-
 # ------------------ DATA CLEANUP & KPIS ------------------
 # normalize columns and parse date
 df.columns = df.columns.str.strip().str.lower()
@@ -452,3 +457,4 @@ body {{
 """
 
 st.components.v1.html(html_template, height=770, scrolling=True)
+
