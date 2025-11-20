@@ -4,15 +4,16 @@ import plotly.graph_objects as go
 import base64
 from pathlib import Path
 import gspread
-from google_auth_oauthlib.flow import InstalledAppFlow
+import json
+from google.oauth2.service_account import Credentials
 
 # ------------------ CONFIG ------------------
 st.set_page_config(page_title="Factory Dashboard (Exact Layout)", layout="wide")
 
 IMAGE_PATH = "winter.JPG"
 
-# Use the exact **name of your new spreadsheet** (from the new Google account)
-SPREADSHEET_NAME = "production sheet"  # <-- Replace with your new sheet's name
+# Use the exact new spreadsheet ID
+SPREADSHEET_ID = "1YXWksPNgOeamvZuCzeG1uFyc5xp9xZbZ"
 SHEET_NAME = "Dashboard Sheet"
 TARGET_SALE = 1992000000
 
@@ -37,25 +38,36 @@ def format_inr(n):
     rest = ''.join([rest[::-1][i:i+2][::-1] + ',' for i in range(0, len(rest), 2)][::-1])
     return rest + last3
 
-# ------------------ GOOGLE SHEETS AUTH USING OAUTH ------------------
+# ------------------ GOOGLE SHEETS AUTH USING SERVICE ACCOUNT ------------------
 st.subheader("Google Sheets Diagnostics")
+
+try:
+    # Load JSON from Streamlit secrets
+    creds_dict = st.secrets["gcp_service_account"]
+    st.success("[OK] Secrets loaded from Streamlit TOML.")
+except Exception as e:
+    st.error(f"[ERROR] Could NOT load gcp_service_account from secrets: {e}")
+    st.stop()
+
 try:
     SCOPES = ["https://www.googleapis.com/auth/spreadsheets",
               "https://www.googleapis.com/auth/drive"]
-
-    # This will open a browser for you to login to your new Google account
-    flow = InstalledAppFlow.from_client_secrets_file("credentials.json", SCOPES)
-    creds = flow.run_local_server(port=0)
-
-    client = gspread.authorize(creds)
-    st.success("[OK] GSpread client authorized using personal Google account.")
+    creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
+    st.success("[OK] Service Account credentials loaded with proper scopes.")
 except Exception as e:
-    st.error(f"[ERROR] Google Sheets OAuth failed: {e}")
+    st.error(f"[ERROR] Service Account auth failed: {e}")
+    st.stop()
+
+try:
+    client = gspread.authorize(creds)
+    st.success("[OK] GSpread client authorized.")
+except Exception as e:
+    st.error(f"[ERROR] GSpread authorization failed: {e}")
     st.stop()
 
 # ------------------ VERIFY SPREADSHEET ACCESS ------------------
 try:
-    sheet = client.open(SPREADSHEET_NAME)
+    sheet = client.open_by_key(SPREADSHEET_ID)
     try:
         worksheet = sheet.worksheet(SHEET_NAME)
         st.success(f"[OK] Spreadsheet and worksheet access verified: {worksheet.title}")
@@ -64,7 +76,7 @@ try:
         worksheet = sheet.add_worksheet(title=SHEET_NAME, rows="100", cols="20")
         st.success(f"[OK] Worksheet '{SHEET_NAME}' created.")
 except gspread.SpreadsheetNotFound:
-    st.error("[ERROR] Spreadsheet not found. Check name or sharing with your Google account.")
+    st.error("[ERROR] Spreadsheet not found. Check ID or sharing with Service Account.")
     st.stop()
 except Exception as e:
     st.error(f"[ERROR] Cannot access spreadsheet or worksheet: {e}")
