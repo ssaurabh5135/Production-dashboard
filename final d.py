@@ -1,10 +1,4 @@
-import streamlit as st 
-import pandas as pd
-import plotly.graph_objects as go 
-import base64 from pathlib
-import Path 
-import gspread from google.oauth2.service_account
-import Credentials
+import streamlit as st import pandas as pd import plotly.graph_objects as go import base64 from pathlib import Path import gspread from google.oauth2.service_account import Credentials
 
 ------------------ PAGE CONFIG ------------------
 
