@@ -9,6 +9,18 @@ from google.oauth2.service_account import Credentials
 # ------------------ PAGE CONFIG ------------------
 st.set_page_config(page_title="Factory Dashboard (Exact Layout)", layout="wide")
 
+# ------------------ AUTO REFRESH: 30 SECONDS ------------------
+st.markdown(
+    """
+    <script>
+    // Reload the whole page every 30 seconds (30000 ms)
+    setTimeout(function(){ window.location.reload(); }, 30000);
+    </script>
+    """,
+    unsafe_allow_html=True
+)
+# ------------------------------------------------
+
 # ------------------ CONFIG ------------------
 IMAGE_PATH = "winter.jpg"  # image stored in the repo next to this file
 SPREADSHEET_ID = "168UoOWdTfOBxBvy_4QGymfiIRimSO2OoJdnzBDRPLvk"
@@ -147,8 +159,6 @@ raw_plan = latest[plan_col]
 plan_vs_actual = ensure_pct(raw_plan)
 
 rej_day = latest[rej_day_col]
-raw_rej_pct = latest[rej_pct_col]
-
 raw_rej_pct = latest[rej_pct_col]
 rej_pct = ensure_pct(raw_rej_pct)
 
@@ -534,7 +544,3 @@ body {{
 """
 
 st.components.v1.html(html_template, height=770, scrolling=True)
-
-
-
-
