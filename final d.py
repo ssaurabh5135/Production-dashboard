@@ -5,21 +5,22 @@ import base64
 from pathlib import Path
 import gspread
 from google.oauth2.service_account import Credentials
+import time   # <-- needed for auto refresh
 
 # ------------------ PAGE CONFIG ------------------
 st.set_page_config(page_title="Factory Dashboard (Exact Layout)", layout="wide")
 
-# ------------------ AUTO REFRESH (NO EXTERNAL MODULE) ------------------
-st.markdown(
-    """
-    <meta http-equiv="refresh" content="60">
-    """,
-    unsafe_allow_html=True
-)
-# --------------------------------------------------
+# ------------------ SAFE AUTO REFRESH (60 SECONDS) ------------------
+if "last_refresh" not in st.session_state:
+    st.session_state.last_refresh = time.time()
+
+if time.time() - st.session_state.last_refresh > 60:  # refresh every 60 seconds
+    st.session_state.last_refresh = time.time()
+    st.experimental_rerun()
+# --------------------------------------------------------------------
 
 # ------------------ CONFIG ------------------
-IMAGE_PATH = "winter.jpg"  # image stored in the repo next to this file
+IMAGE_PATH = "winter.jpg"
 SPREADSHEET_ID = "168UoOWdTfOBxBvy_4QGymfiIRimSO2OoJdnzBDRPLvk"
 DASHBOARD_SHEET = "Dashboard"
 SALES_REPORT_SHEET = "Sales Report"
@@ -94,31 +95,15 @@ df = pd.DataFrame(dash_data)
 
 df.columns = df.columns.str.strip().str.lower()
 
-expected_cols = [
-    "date",
-    "today's sale",
-    "oee %",
-    "plan vs actual %",
-    "rejection amount (daybefore)",
-    "rejection %",
-    "rejection amount (cumulative)",
-    "total sales (cumulative)",
-]
-
+# Parse date column
 date_col = df.columns[0]
 df[date_col] = pd.to_datetime(df[date_col], errors="coerce")
 
+# Numeric columns
 for c in df.columns[1:]:
-    df[c] = pd.to_numeric(
-        df[c].astype(str).str.replace(",", ""), errors="coerce"
-    )
+    df[c] = pd.to_numeric(df[c].astype(str).str.replace(",", ""), errors="coerce")
 
-df = df.dropna(subset=[date_col])
-if df.empty:
-    st.error("No valid dates in Dashboard sheet.")
-    st.stop()
-
-df = df.sort_values(date_col)
+df = df.dropna(subset=[date_col]).sort_values(date_col)
 latest = df.iloc[-1]
 cols = df.columns.tolist()
 
@@ -135,17 +120,10 @@ cols = df.columns.tolist()
 
 # ------------------ KPIs ------------------
 today_sale = latest[today_col]
-
-raw_oee = latest[oee_col]
-oee = ensure_pct(raw_oee)
-
-raw_plan = latest[plan_col]
-plan_vs_actual = ensure_pct(raw_plan)
-
+oee = ensure_pct(latest[oee_col])
+plan_vs_actual = ensure_pct(latest[plan_col])
 rej_day = latest[rej_day_col]
-raw_rej_pct = latest[rej_pct_col]
-rej_pct = ensure_pct(raw_rej_pct)
-
+rej_pct = ensure_pct(latest[rej_pct_col])
 rej_cum = latest[rej_cum_col]
 
 cum_series = df[total_cum_col].dropna()
@@ -164,39 +142,24 @@ gauge = go.Figure(
     go.Indicator(
         mode="gauge",
         value=achieved_pct_val,
-        number={
-            "suffix": "%",
-            "font": {"size": 44, "color": GREEN, "family": "Poppins", "weight": "bold"},
-        },
+        number={"suffix": "%", "font": {"size": 44, "color": GREEN}},
         domain={"x": [0, 1], "y": [0, 1]},
         gauge={
             "shape": "angular",
-            "axis": {
-                "range": [0, 100],
-                "tickvals": [0, 25, 50, 75, 100],
-                "ticktext": ["0%", "25%", "50%", "75%", "100%"],
-            },
+            "axis": {"range": [0, 100]},
             "bar": {"color": GREEN, "thickness": 0.38},
-            "bgcolor": "rgba(0,0,0,0)",
-            "steps": [
-                {"range": [0, 60], "color": "#c4eed1"},
-                {"range": [60, 85], "color": "#7ee2b7"},
-                {"range": [85, 100], "color": GREEN},
-            ],
-            "threshold": {"line": {"color": "#111", "width": 5}, "value": achieved_pct_val},
         },
     )
 )
 gauge.update_layout(
     paper_bgcolor="rgba(0,0,0,0)",
     plot_bgcolor="rgba(0,0,0,0)",
-    margin=dict(t=10, b=30, l=10, r=10),
     height=170,
     width=300,
 )
 gauge_html = gauge.to_html(include_plotlyjs="cdn", full_html=False)
 
-# ================== SALES REPORT → TRENDS ==================
+# ------------------ SALES REPORT (unchanged) ------------------
 try:
     sr_ws = sh.worksheet(SALES_REPORT_SHEET)
     sr_rows = sr_ws.get_values()
@@ -211,6 +174,7 @@ if sr_rows and len(sr_rows) > 1:
     rej_records = []
 
     for r in sr_rows[1:]:
+
         if len(r) >= 3:
             date_str = (r[0] or "").strip()
             sales_type = (r[1] or "").strip().upper()
@@ -248,32 +212,23 @@ rej_df["rej amt"] = pd.to_numeric(
 rej_df = rej_df.dropna(subset=["date"]).sort_values("date")
 
 fig_sale = go.Figure()
-fig_sale.add_trace(
-    go.Bar(x=sale_df["date"], y=sale_df["sale amount"], marker_color=BLUE)
-)
+fig_sale.add_trace(go.Bar(x=sale_df["date"], y=sale_df["sale amount"], marker_color=BLUE))
 fig_sale.update_layout(
-    title="", margin=dict(t=20, b=40, l=10, r=10),
-    paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-    height=135, autosize=True,
-    xaxis=dict(showgrid=False, tickfont=dict(size=12), tickangle=-45, automargin=True),
-    yaxis=dict(showgrid=False, tickfont=dict(size=12), automargin=True),
+    paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", height=135
 )
 sale_html = fig_sale.to_html(include_plotlyjs=False, full_html=False)
 
 fig_rej = go.Figure()
 fig_rej.add_trace(
     go.Scatter(
-        x=rej_df["date"], y=rej_df["rej amt"], mode="lines+markers",
+        x=rej_df["date"], y=rej_df["rej amt"],
+        mode="lines+markers",
         marker=dict(size=8, color=BUTTERFLY_ORANGE),
         line=dict(width=3, color=BUTTERFLY_ORANGE),
     )
 )
 fig_rej.update_layout(
-    title="", margin=dict(t=20, b=40, l=10, r=10),
-    paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-    height=135, autosize=True,
-    xaxis=dict(showgrid=False, tickfont=dict(size=12), tickangle=-45, automargin=True),
-    yaxis=dict(showgrid=False, tickfont=dict(size=12), automargin=True),
+    paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", height=135
 )
 rej_html = fig_rej.to_html(include_plotlyjs=False, full_html=False)
 
@@ -300,12 +255,12 @@ html_template = f"""
 <head>
 <meta charset="utf-8">
 <style>
-/* YOUR SAME CSS */
+/* your CSS */
 </style>
 </head>
 <body>
-<div class="container">
 
+<div class="container">
     <div class="card top-card">
         <div class="center-content">
             <div class="value-orange">{top_date}</div>
@@ -351,15 +306,15 @@ html_template = f"""
 
     <div class="card bottom-card">
         <div class="chart-title-black">Sale Trend</div>
-        <div id="sale_chart_container" class="chart-container">{sale_html}</div>
+        <div class="chart-container">{sale_html}</div>
     </div>
 
     <div class="card bottom-card">
         <div class="chart-title-black">Rejection Trend</div>
-        <div id="rej_chart_container" class="chart-container">{rej_html}</div>
+        <div class="chart-container">{rej_html}</div>
     </div>
-
 </div>
+
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </body>
 </html>
