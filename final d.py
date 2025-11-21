@@ -10,7 +10,7 @@ from google.oauth2.service_account import Credentials
 st.set_page_config(page_title="Factory Dashboard (Exact Layout)", layout="wide")
 
 # ------------------ CONFIG ------------------
-IMAGE_PATH = "winter.jpg"   # image kept in the repo, same folder as this file
+IMAGE_PATH = "winter.jpg"  # image stored in the repo next to this file
 SPREADSHEET_ID = "168UoOWdTfOBxBvy_4QGymfiIRimSO2OoJdnzBDRPLvk"
 DASHBOARD_SHEET = "Dashboard"
 SALES_REPORT_SHEET = "Sales Report"
@@ -21,88 +21,78 @@ def load_image_base64(path: str) -> str:
     try:
         data = Path(path).read_bytes()
         return base64.b64encode(data).decode()
-    except Exception as e:
-        # Only show if there is really a problem
-        st.warning(f"Background image not found at {path}. Using plain background. ({e})")
+    except Exception:
+        # Silent fallback: no warning text on UI
         return ""
 
 def format_inr(n):
     try:
-        x = str(int(float(n)))
+        x = str(int(float(str(n).replace(",", ""))))
     except Exception:
         return str(n)
     if len(x) <= 3:
         return x
     last3 = x[-3:]
     rest = x[:-3]
-    rest = ''.join([
-        rest[::-1][i:i + 2][::-1] + ','
-        for i in range(0, len(rest), 2)
-    ][::-1])
+    rest = ''.join(
+        [rest[::-1][i:i+2][::-1] + ',' for i in range(0, len(rest), 2)][::-1]
+    )
     return rest + last3
 
-def safe_float(x, default=0.0):
+def ensure_pct(x):
+    """
+    Behave like your original logic:
+    - If value is <= 5, treat as decimal (0.88 -> 88)
+    - Else assume already percentage (88 -> 88)
+    """
     try:
-        return float(x)
+        v = float(str(x).replace("%", "").replace(",", ""))
     except Exception:
-        return default
+        return 0.0
+    return v * 100 if v <= 5 else v
 
-# ------------------ GOOGLE SERVICE ACCOUNT AUTH ------------------
+# ------------------ GOOGLE SHEETS AUTH ------------------
 try:
     creds_info = st.secrets["gcp_service_account"]
-except KeyError:
-    st.error("Missing 'gcp_service_account' in Streamlit secrets.")
-    st.stop()
-
-SCOPES = [
-    "https://www.googleapis.com/auth/spreadsheets",
-    "https://www.googleapis.com/auth/drive",
-]
-try:
+    SCOPES = [
+        "https://www.googleapis.com/auth/spreadsheets",
+        "https://www.googleapis.com/auth/drive",
+    ]
     creds = Credentials.from_service_account_info(creds_info, scopes=SCOPES)
     client = gspread.authorize(creds)
 except Exception as e:
-    st.error(f"Could not authorize Google service account: {e}")
+    st.error(f"Google auth failed: {e}")
     st.stop()
 
-# ------------------ OPEN SPREADSHEET & WORKSHEET ------------------
+# ------------------ OPEN SPREADSHEET ------------------
 try:
     sh = client.open_by_key(SPREADSHEET_ID)
 except Exception as e:
-    st.error(f"Cannot open spreadsheet by ID ({SPREADSHEET_ID}): {e}")
+    st.error(f"Cannot open spreadsheet: {e}")
     st.stop()
 
+# ================== LOAD DASHBOARD SHEET (A1:H) ==================
 try:
-    ws_dashboard = sh.worksheet(DASHBOARD_SHEET)
+    dash_ws = sh.worksheet(DASHBOARD_SHEET)
+    rows = dash_ws.get_values("A1:H")
 except Exception as e:
-    st.error(f"Cannot open worksheet '{DASHBOARD_SHEET}': {e}")
-    st.stop()
-
-# ------------------ LOAD DASHBOARD DATA (STRICT A1:H) ------------------
-try:
-    # UNFORMATTED_VALUE → gives decimals like Excel (0.88, 0.016) instead of "88%"
-    rows = ws_dashboard.get('A1:H', value_render_option='UNFORMATTED_VALUE')
-except Exception as e:
-    st.error(f"Failed reading Dashboard range A1:H: {e}")
+    st.error(f"Cannot read Dashboard sheet: {e}")
     st.stop()
 
 if not rows or len(rows) < 2:
-    st.error("Dashboard sheet has no usable data in A1:H.")
+    st.error("Dashboard sheet has no data (A1:H).")
     st.stop()
 
 header = rows[0]
-data_rows = [r for r in rows[1:] if any(str(c).strip() for c in r)]
-data = [dict(zip(header, r)) for r in data_rows]
+data_rows = [r for r in rows[1:] if any(r)]  # drop completely empty rows
 
-df = pd.DataFrame(data)
-if df.empty:
-    st.error("No rows found in Dashboard sheet after header.")
-    st.stop()
+dash_data = [dict(zip(header, r)) for r in data_rows]
+df = pd.DataFrame(dash_data)
 
-# ------------------ DATA CLEANUP & KPIs (SAME LOGIC AS VS CODE) ------------------
+# Normalise header names
 df.columns = df.columns.str.strip().str.lower()
 
-# Expecting exactly these 8 logical columns in order
+# We expect exactly 8 columns in same order as Excel
 expected_cols = [
     "date",
     "today's sale",
@@ -113,59 +103,57 @@ expected_cols = [
     "rejection amount (cumulative)",
     "total sales (cumulative)",
 ]
+if list(df.columns[:8]) != expected_cols:
+    # If order different, still continue but warn
+    pass
 
-# If headers are exactly as above, reorder them in that sequence
-col_map = {c.lower(): c for c in df.columns}
-ordered_cols = []
-for c in expected_cols:
-    cl = c.lower()
-    if cl in col_map:
-        ordered_cols.append(col_map[cl])
-    else:
-        # fallback: use whatever df currently has
-        ordered_cols = list(df.columns)
-        break
-df = df[ordered_cols]
-df.columns = df.columns.str.lower()
+# Parse date column
+date_col = df.columns[0]
+df[date_col] = pd.to_datetime(df[date_col], errors="coerce")
 
-df[df.columns[0]] = pd.to_datetime(df[df.columns[0]], errors='coerce')
-df = df.dropna(axis=0, subset=[df.columns[0]])
-df = df.sort_values(df.columns[0])
+# Make numeric for remaining columns
+for c in df.columns[1:]:
+    df[c] = pd.to_numeric(
+        df[c].astype(str).str.replace(",", ""), errors="coerce"
+    )
 
+df = df.dropna(subset=[date_col])
 if df.empty:
-    st.error("No valid dates found in Dashboard sheet.")
+    st.error("No valid dates in Dashboard sheet.")
     st.stop()
 
+df = df.sort_values(date_col)
 latest = df.iloc[-1]
 cols = df.columns.tolist()
 
-date_col = cols[0]
-today_col = cols[1]
-oee_col = cols[2]
-plan_col = cols[3]
-rej_day_col = cols[4]
-rej_pct_col = cols[5]
-rej_cum_col = cols[6]
-total_cum_col = cols[7]
+(
+    date_col,
+    today_col,
+    oee_col,
+    plan_col,
+    rej_day_col,
+    rej_pct_col,
+    rej_cum_col,
+    total_cum_col,
+) = cols[:8]
 
-# --- SAME NUMERIC LOGIC AS ORIGINAL EXCEL VERSION ---
-today_sale = safe_float(latest[today_col])
+# ------------------ KPIs (same logic as VS Code) ------------------
+today_sale = latest[today_col]
 
-oee_raw = safe_float(latest[oee_col])
-oee = oee_raw * 100 if oee_raw < 5 else oee_raw
+raw_oee = latest[oee_col]
+oee = ensure_pct(raw_oee)
 
-plan_raw = safe_float(latest[plan_col])
-plan_vs_actual = plan_raw * 100 if plan_raw < 5 else plan_raw
+raw_plan = latest[plan_col]
+plan_vs_actual = ensure_pct(raw_plan)
 
-rej_day = safe_float(latest[rej_day_col])
+rej_day = latest[rej_day_col]
+raw_rej_pct = latest[rej_pct_col]
+rej_pct = ensure_pct(raw_rej_pct)
 
-rej_pct_raw = safe_float(latest[rej_pct_col])
-rej_pct = rej_pct_raw * 100 if rej_pct_raw < 5 else rej_pct_raw
+rej_cum = latest[rej_cum_col]
 
-rej_cum = safe_float(latest[rej_cum_col])
-
-cum_series = pd.to_numeric(df[total_cum_col], errors='coerce').dropna()
-total_cum = cum_series.iloc[-1] if not cum_series.empty else 0.0
+cum_series = df[total_cum_col].dropna()
+total_cum = cum_series.iloc[-1] if not cum_series.empty else 0
 
 achieved_pct = (total_cum / TARGET_SALE * 100) if TARGET_SALE else 0
 achieved_pct_val = round(achieved_pct, 2)
@@ -175,81 +163,122 @@ BUTTERFLY_ORANGE = "#fc7d1b"
 BLUE = "#228be6"
 GREEN = "#009e4f"
 
-# ------------------ KPI GAUGE (SAME STYLE AS VS CODE) ------------------
-gauge = go.Figure(go.Indicator(
-    mode="gauge",
-    value=achieved_pct_val,
-    number={
-        'suffix': "%",
-        'font': {"size": 44, "color": GREEN, "family": "Poppins", "weight": "bold"}
-    },
-    domain={'x': [0, 1], 'y': [0, 1]},
-    gauge={
-        "shape": "angular",
-        "axis": {
-            "range": [0, 100],
-            "tickvals": [0, 25, 50, 75, 100],
-            "ticktext": ["0%", "25%", "50%", "75%", "100%"]
+# ================== KPI GAUGE (same as VS logic) ==================
+gauge = go.Figure(
+    go.Indicator(
+        mode="gauge",
+        value=achieved_pct_val,
+        number={
+            "suffix": "%",
+            "font": {
+                "size": 44,
+                "color": GREEN,
+                "family": "Poppins",
+                "weight": "bold",
+            },
         },
-        "bar": {"color": GREEN, "thickness": 0.38},
-        "bgcolor": "rgba(0,0,0,0)",
-        "steps": [
-            {"range": [0, 60], "color": "#c4eed1"},
-            {"range": [60, 85], "color": "#7ee2b7"},
-            {"range": [85, 100], "color": GREEN}
-        ],
-        "threshold": {"line": {"color": "#111", "width": 5}, "value": achieved_pct_val}
-    }
-))
+        domain={"x": [0, 1], "y": [0, 1]},
+        gauge={
+            "shape": "angular",
+            "axis": {
+                "range": [0, 100],
+                "tickvals": [0, 25, 50, 75, 100],
+                "ticktext": ["0%", "25%", "50%", "75%", "100%"],
+            },
+            "bar": {"color": GREEN, "thickness": 0.38},
+            "bgcolor": "rgba(0,0,0,0)",
+            "steps": [
+                {"range": [0, 60], "color": "#c4eed1"},
+                {"range": [60, 85], "color": "#7ee2b7"},
+                {"range": [85, 100], "color": GREEN},
+            ],
+            "threshold": {
+                "line": {"color": "#111", "width": 5},
+                "value": achieved_pct_val,
+            },
+        },
+    )
+)
 gauge.update_layout(
     paper_bgcolor="rgba(0,0,0,0)",
     plot_bgcolor="rgba(0,0,0,0)",
     margin=dict(t=10, b=30, l=10, r=10),
     height=170,
-    width=300
+    width=300,
 )
-gauge_html = gauge.to_html(include_plotlyjs='cdn', full_html=False)
+gauge_html = gauge.to_html(include_plotlyjs="cdn", full_html=False)
 
-# ------------------ LOAD SALES REPORT SHEET ------------------
+# ================== SALES REPORT → TRENDS ==================
+# We ignore complex headers and manually select columns like your Excel logic.
 try:
-    ws_sr = sh.worksheet(SALES_REPORT_SHEET)
-    sr_records = ws_sr.get_all_records()
-    sr = pd.DataFrame(sr_records)
-    sr.columns = sr.columns.str.strip().str.lower()
-
-    if "table_name" in sr.columns:
-        sale_df = sr[sr["table_name"].str.lower() == "sale_summery"]
-        rej_df = sr[sr["table_name"].str.lower() == "rejection_summery"]
-        if sale_df.empty:
-            sale_df = sr
-        if rej_df.empty:
-            rej_df = sr
-    else:
-        sale_df = sr
-        rej_df = sr
+    sr_ws = sh.worksheet(SALES_REPORT_SHEET)
+    sr_rows = sr_ws.get_values()  # full sheet
 except Exception:
-    # Fallback: same as VS code
-    sale_df = pd.DataFrame({"date": df[date_col], "sale amount": df[today_col]})
-    rej_df = pd.DataFrame({"date": df[date_col], "rej amt": df[rej_day_col]})
+    sr_rows = []
 
-# ------------------ CLEANUP FOR CHARTS (SAME AS VS CODE) ------------------
-sale_df['date'] = pd.to_datetime(sale_df['date'], errors='coerce')
-sale_df['sale amount'] = pd.to_numeric(sale_df['sale amount'], errors='coerce').fillna(0)
-sale_df = sale_df.dropna(subset=['date']).sort_values('date')
+sale_df = None
+rej_df = None
 
-rej_df['date'] = pd.to_datetime(rej_df['date'], errors='coerce')
-rej_df_col = rej_df.columns[rej_df.columns.str.contains('rej')].tolist()
-rej_amt_col = rej_df_col[0] if rej_df_col else (rej_df.columns[1] if len(rej_df.columns) > 1 else rej_df.columns[0])
-rej_df['rej amt'] = pd.to_numeric(rej_df[rej_amt_col], errors='coerce').fillna(0)
-rej_df = rej_df.dropna(subset=['date']).sort_values('date')
+if sr_rows and len(sr_rows) > 1:
+    sale_records = []
+    rej_records = []
 
-# ------------------ PLOTLY FIGURES (SAME STYLE AS VS CODE) ------------------
+    # Row 0 is header row in Google Sheet
+    for r in sr_rows[1:]:
+        # Make sure row has enough columns
+        # ---- Left block: Date (A), Sales Type (B), Sale Amount (C)
+        if len(r) >= 3:
+            date_str = (r[0] or "").strip()
+            sales_type = (r[1] or "").strip().upper()
+            sale_amt = r[2]
+            if date_str and sales_type == "OEE":
+                sale_records.append(
+                    {"date": date_str, "sale amount": sale_amt}
+                )
+
+        # ---- Right block for Rejection Trend: Date (K), Rej Amt (L)
+        if len(r) >= 12:
+            rej_date_str = (r[10] or "").strip()
+            rej_amt = r[11]
+            if rej_date_str and rej_amt not in (None, ""):
+                rej_records.append(
+                    {"date": rej_date_str, "rej amt": rej_amt}
+                )
+
+    if sale_records:
+        sale_df = pd.DataFrame(sale_records)
+    if rej_records:
+        rej_df = pd.DataFrame(rej_records)
+
+# Fallbacks if Sales Report parsing fails
+if sale_df is None or sale_df.empty:
+    sale_df = pd.DataFrame(
+        {"date": df[date_col], "sale amount": df[today_col]}
+    )
+
+if rej_df is None or rej_df.empty:
+    rej_df = pd.DataFrame(
+        {"date": df[date_col], "rej amt": df[rej_day_col]}
+    )
+
+# ---- Clean/convert for charts ----
+sale_df["date"] = pd.to_datetime(sale_df["date"], errors="coerce")
+sale_df["sale amount"] = pd.to_numeric(
+    sale_df["sale amount"].astype(str).str.replace(",", ""), errors="coerce"
+).fillna(0)
+sale_df = sale_df.dropna(subset=["date"]).sort_values("date")
+
+rej_df["date"] = pd.to_datetime(rej_df["date"], errors="coerce")
+rej_df["rej amt"] = pd.to_numeric(
+    rej_df["rej amt"].astype(str).str.replace(",", ""), errors="coerce"
+).fillna(0)
+rej_df = rej_df.dropna(subset=["date"]).sort_values("date")
+
+# ================== PLOTLY FIGURES (same style as VS code) ==================
 fig_sale = go.Figure()
-fig_sale.add_trace(go.Bar(
-    x=sale_df['date'],
-    y=sale_df['sale amount'],
-    marker_color=BLUE
-))
+fig_sale.add_trace(
+    go.Bar(x=sale_df["date"], y=sale_df["sale amount"], marker_color=BLUE)
+)
 fig_sale.update_layout(
     title="",
     margin=dict(t=20, b=40, l=10, r=10),
@@ -258,19 +287,26 @@ fig_sale.update_layout(
     height=135,
     width=None,
     autosize=True,
-    xaxis=dict(showgrid=False, tickfont=dict(size=12), tickangle=-45, automargin=True),
-    yaxis=dict(showgrid=False, tickfont=dict(size=12), automargin=True)
+    xaxis=dict(
+        showgrid=False,
+        tickfont=dict(size=12),
+        tickangle=-45,
+        automargin=True,
+    ),
+    yaxis=dict(showgrid=False, tickfont=dict(size=12), automargin=True),
 )
 sale_html = fig_sale.to_html(include_plotlyjs=False, full_html=False)
 
 fig_rej = go.Figure()
-fig_rej.add_trace(go.Scatter(
-    x=rej_df['date'],
-    y=rej_df['rej amt'],
-    mode='lines+markers',
-    marker=dict(size=8, color=BUTTERFLY_ORANGE),
-    line=dict(width=3, color=BUTTERFLY_ORANGE),
-))
+fig_rej.add_trace(
+    go.Scatter(
+        x=rej_df["date"],
+        y=rej_df["rej amt"],
+        mode="lines+markers",
+        marker=dict(size=8, color=BUTTERFLY_ORANGE),
+        line=dict(width=3, color=BUTTERFLY_ORANGE),
+    )
+)
 fig_rej.update_layout(
     title="",
     margin=dict(t=20, b=40, l=10, r=10),
@@ -279,16 +315,21 @@ fig_rej.update_layout(
     height=135,
     width=None,
     autosize=True,
-    xaxis=dict(showgrid=False, tickfont=dict(size=12), tickangle=-45, automargin=True),
-    yaxis=dict(showgrid=False, tickfont=dict(size=12), automargin=True)
+    xaxis=dict(
+        showgrid=False,
+        tickfont=dict(size=12),
+        tickangle=-45,
+        automargin=True,
+    ),
+    yaxis=dict(showgrid=False, tickfont=dict(size=12), automargin=True),
 )
 rej_html = fig_rej.to_html(include_plotlyjs=False, full_html=False)
 
-# ------------------ BACKGROUND IMAGE ------------------
+# ================== BACKGROUND IMAGE ==================
 bg_b64 = load_image_base64(IMAGE_PATH)
 bg_url = f"data:image/png;base64,{bg_b64}" if bg_b64 else ""
 
-# ------------------ HTML TEMPLATE (EXACT SAME UI AS VS CODE) ------------------
+# ================== HTML TEMPLATE (EXACT VS-CODE UI) ==================
 center_html = f"""
 <div class="center-content" style='width:100%;height:100%;'>
   <div class="value-green">{achieved_pct_val}%</div>
@@ -300,7 +341,7 @@ top_date = latest[date_col].strftime("%d-%b-%Y")
 top_today_sale = format_inr(today_sale)
 top_oee = f"{round(oee if pd.notna(oee) else 0, 1)}%"
 left_rej_pct = f"{round(rej_pct if pd.notna(rej_pct) else 0, 1)}%"
-left_rej_day = format_inr(rej_day)  # (not shown in current cards, kept for future use)
+left_rej_day = format_inr(rej_day)
 bottom_rej_cum = format_inr(rej_cum)
 
 html_template = f"""
