@@ -5,13 +5,18 @@ import base64
 from pathlib import Path
 import gspread
 from google.oauth2.service_account import Credentials
-from streamlit_autorefresh import st_autorefresh   # <-- ADDED
 
 # ------------------ PAGE CONFIG ------------------
 st.set_page_config(page_title="Factory Dashboard (Exact Layout)", layout="wide")
 
-# ------------------ AUTO REFRESH (only addition) ------------------
-st_autorefresh(interval=60 * 1000, key="autoRefreshKey")   # <-- ADDED
+# ------------------ AUTO REFRESH (NO EXTERNAL MODULE) ------------------
+st.markdown(
+    """
+    <meta http-equiv="refresh" content="60">
+    """,
+    unsafe_allow_html=True
+)
+# --------------------------------------------------
 
 # ------------------ CONFIG ------------------
 IMAGE_PATH = "winter.jpg"  # image stored in the repo next to this file
@@ -295,7 +300,7 @@ html_template = f"""
 <head>
 <meta charset="utf-8">
 <style>
-/* (HTML + CSS — SAME AS YOU PROVIDED) */
+/* YOUR SAME CSS */
 </style>
 </head>
 <body>
