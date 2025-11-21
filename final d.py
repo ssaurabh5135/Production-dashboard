@@ -19,6 +19,16 @@ if time.time() - st.session_state.last_refresh > 60:  # refresh every 60 seconds
     st.experimental_rerun()
 # --------------------------------------------------------------------
 
+# ------------------ SAFE AUTO REFRESH (60 seconds) ------------------
+import time
+if "last_refresh" not in st.session_state:
+    st.session_state.last_refresh = time.time()
+
+if time.time() - st.session_state.last_refresh > 60:  # refresh every 60 seconds
+    st.session_state.last_refresh = time.time()
+    st.experimental_rerun()
+# --------------------------------------------------------------------
+
 # ------------------ CONFIG ------------------
 IMAGE_PATH = "winter.jpg"  # image stored in the repo next to this file
 SPREADSHEET_ID = "168UoOWdTfOBxBvy_4QGymfiIRimSO2OoJdnzBDRPLvk"
@@ -544,6 +554,7 @@ body {{
 """
 
 st.components.v1.html(html_template, height=770, scrolling=True)
+
 
 
 
