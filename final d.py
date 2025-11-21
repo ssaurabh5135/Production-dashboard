@@ -5,6 +5,7 @@ import base64
 from pathlib import Path
 import gspread
 from google.oauth2.service_account import Credentials
+import time  # <-- ADDED
 
 # ------------------ PAGE CONFIG ------------------
 st.set_page_config(page_title="Factory Dashboard (Exact Layout)", layout="wide")
@@ -533,8 +534,11 @@ body {{
 </html>
 """
 
-st.components.v1.html(html_template, height=770, scrolling=True)
-
-
-
-
+# -------- AUTO REFRESH VIA COMPONENT KEY (30 SEC) --------
+refresh_key = int(time.time() // 30)
+st.components.v1.html(
+    html_template,
+    height=770,
+    scrolling=True,
+    key=f"frame_{refresh_key}"
+            )
