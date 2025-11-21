@@ -149,15 +149,9 @@ plan_vs_actual = ensure_pct(raw_plan)
 rej_day = latest[rej_day_col]
 raw_rej_pct = latest[rej_pct_col]
 
-try:
-    s = str(raw_rej_pct).strip()
-    s = s.replace("%", "")
-    s = s.replace(" ", "")
-    s = s.replace(",", "")
-    rej_pct = float(s)
-except:
-    rej_pct = 0
-    
+raw_rej_pct = latest[rej_pct_col]
+rej_pct = ensure_pct(raw_rej_pct)
+
 rej_cum = latest[rej_cum_col]
 
 cum_series = df[total_cum_col].dropna()
@@ -540,5 +534,6 @@ body {{
 """
 
 st.components.v1.html(html_template, height=770, scrolling=True)
+
 
 
