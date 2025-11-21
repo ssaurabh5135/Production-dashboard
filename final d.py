@@ -342,7 +342,7 @@ center_html = f"""
 top_date = latest[date_col].strftime("%d-%b-%Y")
 top_today_sale = format_inr(today_sale)
 top_oee = f"{round(oee if pd.notna(oee) else 0, 1)}%"
-left_rej_pct = f"{round(rej_pct if pd.notna(rej_pct) else 0, 1)}%"
+left_rej_pct = f"{(rej_pct: .1f)}%"
 left_rej_day = format_inr(rej_day)
 bottom_rej_cum = format_inr(rej_cum)
 
@@ -534,6 +534,7 @@ body {{
 """
 
 st.components.v1.html(html_template, height=770, scrolling=True)
+
 
 
 
