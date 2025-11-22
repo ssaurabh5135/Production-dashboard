@@ -1,4 +1,5 @@
 
+
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
@@ -76,7 +77,6 @@ data_rows = [r for r in rows[1:] if any(r)]
 dash_data = [dict(zip(header, r)) for r in data_rows]
 df = pd.DataFrame(dash_data)
 df.columns = df.columns.str.strip().str.lower()
-
 expected_cols = [
     "date",
     "today's sale",
@@ -87,7 +87,6 @@ expected_cols = [
     "rejection amount (cumulative)",
     "total sales (cumulative)",
 ]
-
 if list(df.columns[:8]) != expected_cols:
     pass
 
@@ -95,7 +94,6 @@ date_col = df.columns[0]
 df[date_col] = pd.to_datetime(df[date_col], errors="coerce")
 for c in df.columns[1:]:
     df[c] = pd.to_numeric(df[c].astype(str).str.replace(",", ""), errors="coerce")
-
 df = df.dropna(subset=[date_col])
 if df.empty:
     st.error("No valid dates in Dashboard sheet.")
@@ -214,7 +212,6 @@ sale_df["sale amount"] = pd.to_numeric(
     sale_df["sale amount"].astype(str).str.replace(",", ""), errors="coerce"
 ).fillna(0)
 sale_df = sale_df.dropna(subset=["date"]).sort_values("date")
-
 rej_df["date"] = pd.to_datetime(rej_df["date"], errors="coerce")
 rej_df["rej amt"] = pd.to_numeric(
     rej_df["rej amt"].astype(str).str.replace(",", ""), errors="coerce"
@@ -245,8 +242,9 @@ fig_rej.add_trace(go.Scatter(
     mode="lines+markers",
     marker=dict(size=10, color=BUTTERFLY_ORANGE, line=dict(width=1.5, color="#fff")),
     line=dict(width=7, color=BUTTERFLY_ORANGE, shape="spline"),
+    hoverinfo="x+y",
     opacity=1,
-    name=""
+    name="" # Blank name disables Plotly legend entry
 ))
 fig_rej.add_trace(go.Scatter(
     x=rej_df["date"], y=rej_df["rej amt"],
@@ -254,14 +252,14 @@ fig_rej.add_trace(go.Scatter(
     line=dict(width=17, color="rgba(252,125,27,0.13)", shape="spline"),
     hoverinfo="skip",
     opacity=1,
-    name=""
+    name="" # Also disables legend entry
 ))
 fig_rej.update_layout(
     margin=dict(t=24, b=40, l=10, r=10),
     paper_bgcolor="rgba(0,0,0,0)",
     plot_bgcolor="rgba(0,0,0,0)",
     height=135,
-    showlegend=False,
+    showlegend=False, # <== DISABLE LEGEND HERE
     xaxis=dict(showgrid=False, tickfont=dict(size=12), tickangle=-45, automargin=True),
     yaxis=dict(showgrid=False, tickfont=dict(size=12), automargin=True),
 )
@@ -270,6 +268,7 @@ sale_html = fig_sale.to_html(include_plotlyjs=False, full_html=False)
 rej_html = fig_rej.to_html(include_plotlyjs=False, full_html=False)
 bg_b64 = load_image_base64(IMAGE_PATH)
 
+# --- ADD THIS after loading bg_b64 ---
 st.markdown(
     f"""
     <style>
@@ -296,16 +295,11 @@ st.markdown(
 )
 
 bg_url = f"data:image/png;base64,{bg_b64}" if bg_b64 else ""
-
 top_date = latest[date_col].strftime("%d-%b-%Y")
 top_today_sale = format_inr(today_sale)
 top_oee = f"{round(oee if pd.notna(oee) else 0, 1)}%"
-left_rej_pct = f"{rej_pct:.1f}%"
+left_rej_pct = f"{rej_pct: .1f}%"
 bottom_rej_cum = format_inr(rej_cum)
-
-# ----------------------------------------------------------------------
-# 🔥 THE ONLY CHANGE YOU REQUESTED IS JUST BELOW
-# ----------------------------------------------------------------------
 
 html_template = f"""
 <!doctype html>
@@ -323,14 +317,14 @@ body {{
     margin:0;
     padding:0;
     font-family:'Poppins',sans-serif;
-    background: none !important;
+    background: none !important; /* background is set globally above */
     color:#091128;
 }}
 .container {{
     box-sizing: border-box;
     width: 100vw;
     height: 100vh;
-    padding: 5vw;
+    padding: 5vw; /* Increase this to add more gap */
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     grid-template-rows: 130px 220px 140px;
@@ -415,14 +409,14 @@ body {{
 <body>
 <div class="container">
 
+    <!-- Top Row -->
     <div class="card top-card">
       <canvas class="snow-bg" id="snowdate"></canvas>
       <div class="center-content">
-        <div class="value-orange" id="datevalue">{top_date}</div>
+        <div class="value-orange oneline" id="datevalue">{top_date}</div>
         <div class="title-black">Date</div>
       </div>
     </div>
-
     <div class="card top-card">
       <canvas class="snow-bg" id="snowsale"></canvas>
       <div class="center-content">
@@ -430,15 +424,13 @@ body {{
         <div class="title-black">Today's Sale</div>
       </div>
     </div>
-
     <div class="card top-card">
       <canvas class="snow-bg" id="snowoee"></canvas>
       <div class="center-content">
-        <div class="value-orange" id="oeevalue">{top_oee}</div> <!-- FIXED HERE -->
+        <div class="value-orange" id="oeevalue">{top_oee}%</div>
         <div class="title-black">OEE %</div>
       </div>
     </div>
-
     <div class="card">
       <canvas class="snow-bg" id="snowrej"></canvas>
       <div class="center-content">
@@ -446,7 +438,6 @@ body {{
         <div class="title-black">Rejection %</div>
       </div>
     </div>
-
     <div class="card">
       <canvas class="snow-bg" id="snowach"></canvas>
       <div class="center-content">
@@ -454,12 +445,10 @@ body {{
         <div class="title-green">Achieved %</div>
       </div>
     </div>
-
     <div class="card">
       <canvas class="snow-bg" id="snowspeed"></canvas>
       {gauge_html}
     </div>
-
     <div class="card bottom-card">
       <canvas class="snow-bg" id="snowrejcum"></canvas>
       <div class="center-content">
@@ -467,21 +456,17 @@ body {{
         <div class="title-black">Rejection (Cumulative)</div>
       </div>
     </div>
-
     <div class="card bottom-card">
         <canvas class="snow-bg" id="snowsalechart"></canvas>
         <div class="chart-title-black">Sale Trend</div>
         <div id="sale_chart_container" class="chart-container">{sale_html}</div>
     </div>
-
     <div class="card bottom-card">
         <canvas class="snow-bg" id="snowrejchart"></canvas>
         <div class="chart-title-black">Rejection Trend</div>
         <div id="rej_chart_container" class="chart-container">{rej_html}</div>
     </div>
-
 </div>
-
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 <script>
 function makeSnow(canvas) {{
