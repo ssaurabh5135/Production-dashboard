@@ -9,7 +9,7 @@ from google.oauth2.service_account import Credentials
 
 st.set_page_config(page_title="Factory Dashboard (Exact Layout)", layout="wide")
 
-IMAGE_PATH = "snow.jpg"
+IMAGE_PATH = "winter.jpg"
 SPREADSHEET_ID = "168UoOWdTfOBxBvy_4QGymfiIRimSO2OoJdnzBDRPLvk"
 DASHBOARD_SHEET = "Dashboard"
 SALES_REPORT_SHEET = "Sales Report"
@@ -128,7 +128,6 @@ BUTTERFLY_ORANGE = "#fc7d1b"
 BLUE = "#228be6"
 GREEN = "#009e4f"
 
-# --- KPI GAUGE ---
 gauge = go.Figure(
     go.Indicator(
         mode="gauge",
@@ -242,20 +241,23 @@ fig_rej.add_trace(go.Scatter(
     marker=dict(size=10, color=BUTTERFLY_ORANGE, line=dict(width=1.5, color="#fff")),
     line=dict(width=7, color=BUTTERFLY_ORANGE, shape="spline"),
     hoverinfo="x+y",
-    opacity=1
+    opacity=1,
+    name="" # Blank name disables Plotly legend entry
 ))
 fig_rej.add_trace(go.Scatter(
     x=rej_df["date"], y=rej_df["rej amt"],
     mode="lines",
     line=dict(width=17, color="rgba(252,125,27,0.13)", shape="spline"),
     hoverinfo="skip",
-    opacity=1
+    opacity=1,
+    name="" # Also disables legend entry
 ))
 fig_rej.update_layout(
     margin=dict(t=24, b=40, l=10, r=10),
     paper_bgcolor="rgba(0,0,0,0)",
     plot_bgcolor="rgba(0,0,0,0)",
     height=135,
+    showlegend=False, # <== DISABLE LEGEND HERE
     xaxis=dict(showgrid=False, tickfont=dict(size=12), tickangle=-45, automargin=True),
     yaxis=dict(showgrid=False, tickfont=dict(size=12), automargin=True),
 )
@@ -305,7 +307,7 @@ body {{
     position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center;
 }}
 .snow-bg {{
-    pointer-events:none; position:absolute; left:0; top:0; width:100%; height:100%; z-index:0; opacity:0.5;
+    pointer-events:none; position:absolute; left:0; top:0; width:100%; height:100%; z-index:0; opacity:0.50;
 }}
 .value-orange, .value-blue {{
     font-size:54px!important; font-family:'Poppins','Segoe UI',Arial,sans-serif;
@@ -489,6 +491,7 @@ st.components.v1.html(html_template, height=770, scrolling=True)
 # import streamlit as st
 # import pandas as pd
 # import plotly.graph_objects as go
+# import plotly.colors as pc
 # import base64
 # from pathlib import Path
 # import gspread
@@ -496,7 +499,7 @@ st.components.v1.html(html_template, height=770, scrolling=True)
 
 # st.set_page_config(page_title="Factory Dashboard (Exact Layout)", layout="wide")
 
-# IMAGE_PATH = "winter.jpg"
+# IMAGE_PATH = "snow.jpg"
 # SPREADSHEET_ID = "168UoOWdTfOBxBvy_4QGymfiIRimSO2OoJdnzBDRPLvk"
 # DASHBOARD_SHEET = "Dashboard"
 # SALES_REPORT_SHEET = "Sales Report"
@@ -578,9 +581,7 @@ st.components.v1.html(html_template, height=770, scrolling=True)
 # date_col = df.columns[0]
 # df[date_col] = pd.to_datetime(df[date_col], errors="coerce")
 # for c in df.columns[1:]:
-#     df[c] = pd.to_numeric(
-#         df[c].astype(str).str.replace(",", ""), errors="coerce"
-#     )
+#     df[c] = pd.to_numeric(df[c].astype(str).str.replace(",", ""), errors="coerce")
 # df = df.dropna(subset=[date_col])
 # if df.empty:
 #     st.error("No valid dates in Dashboard sheet.")
@@ -617,6 +618,7 @@ st.components.v1.html(html_template, height=770, scrolling=True)
 # BLUE = "#228be6"
 # GREEN = "#009e4f"
 
+# # --- KPI GAUGE ---
 # gauge = go.Figure(
 #     go.Indicator(
 #         mode="gauge",
@@ -705,63 +707,57 @@ st.components.v1.html(html_template, height=770, scrolling=True)
 # ).fillna(0)
 # rej_df = rej_df.dropna(subset=["date"]).sort_values("date")
 
+# bar_gradients = pc.n_colors('rgb(34,139,230)', 'rgb(79,223,253)', len(sale_df), colortype='rgb')
 # fig_sale = go.Figure()
-# fig_sale.add_trace(
-#     go.Bar(x=sale_df["date"], y=sale_df["sale amount"], marker_color=BLUE)
-# )
+# fig_sale.add_trace(go.Bar(
+#     x=sale_df["date"],
+#     y=sale_df["sale amount"],
+#     marker_color=bar_gradients,
+#     marker_line_width=0,
+#     opacity=0.97
+# ))
 # fig_sale.update_layout(
-#     title="",
-#     margin=dict(t=20, b=40, l=10, r=10),
+#     margin=dict(t=24, b=40, l=10, r=10),
 #     paper_bgcolor="rgba(0,0,0,0)",
 #     plot_bgcolor="rgba(0,0,0,0)",
 #     height=135,
-#     width=None,
-#     autosize=True,
-#     xaxis=dict(
-#         showgrid=False,
-#         tickfont=dict(size=12),
-#         tickangle=-45,
-#         automargin=True,
-#     ),
+#     xaxis=dict(showgrid=False, tickfont=dict(size=12), tickangle=-45, automargin=True),
 #     yaxis=dict(showgrid=False, tickfont=dict(size=12), automargin=True),
 # )
-# sale_html = fig_sale.to_html(include_plotlyjs=False, full_html=False)
 
 # fig_rej = go.Figure()
-# fig_rej.add_trace(
-#     go.Scatter(
-#         x=rej_df["date"],
-#         y=rej_df["rej amt"],
-#         mode="lines+markers",
-#         marker=dict(size=8, color=BUTTERFLY_ORANGE),
-#         line=dict(width=3, color=BUTTERFLY_ORANGE),
-#     )
-# )
+# fig_rej.add_trace(go.Scatter(
+#     x=rej_df["date"], y=rej_df["rej amt"],
+#     mode="lines+markers",
+#     marker=dict(size=10, color=BUTTERFLY_ORANGE, line=dict(width=1.5, color="#fff")),
+#     line=dict(width=7, color=BUTTERFLY_ORANGE, shape="spline"),
+#     hoverinfo="x+y",
+#     opacity=1
+# ))
+# fig_rej.add_trace(go.Scatter(
+#     x=rej_df["date"], y=rej_df["rej amt"],
+#     mode="lines",
+#     line=dict(width=17, color="rgba(252,125,27,0.13)", shape="spline"),
+#     hoverinfo="skip",
+#     opacity=1
+# ))
 # fig_rej.update_layout(
-#     title="",
-#     margin=dict(t=20, b=40, l=10, r=10),
+#     margin=dict(t=24, b=40, l=10, r=10),
 #     paper_bgcolor="rgba(0,0,0,0)",
 #     plot_bgcolor="rgba(0,0,0,0)",
 #     height=135,
-#     width=None,
-#     autosize=True,
-#     xaxis=dict(
-#         showgrid=False,
-#         tickfont=dict(size=12),
-#         tickangle=-45,
-#         automargin=True,
-#     ),
+#     xaxis=dict(showgrid=False, tickfont=dict(size=12), tickangle=-45, automargin=True),
 #     yaxis=dict(showgrid=False, tickfont=dict(size=12), automargin=True),
 # )
-# rej_html = fig_rej.to_html(include_plotlyjs=False, full_html=False)
 
+# sale_html = fig_sale.to_html(include_plotlyjs=False, full_html=False)
+# rej_html = fig_rej.to_html(include_plotlyjs=False, full_html=False)
 # bg_b64 = load_image_base64(IMAGE_PATH)
 # bg_url = f"data:image/png;base64,{bg_b64}" if bg_b64 else ""
-
 # top_date = latest[date_col].strftime("%d-%b-%Y")
 # top_today_sale = format_inr(today_sale)
-# top_oee = f"{round(oee if pd.notna(oee) else 0, 1)}"
-# left_rej_pct = f"{rej_pct: .1f}"
+# top_oee = f"{round(oee if pd.notna(oee) else 0, 1)}%"
+# left_rej_pct = f"{rej_pct: .1f}%"
 # bottom_rej_cum = format_inr(rej_cum)
 
 # html_template = f"""
@@ -771,7 +767,7 @@ st.components.v1.html(html_template, height=770, scrolling=True)
 # <meta charset="utf-8">
 # <style>
 # :root {{
-#     --card-radius: 16px;
+#     --card-radius: 17px;
 #     --orange: {BUTTERFLY_ORANGE};
 #     --blue: {BLUE};
 #     --green: {GREEN};
@@ -785,13 +781,12 @@ st.components.v1.html(html_template, height=770, scrolling=True)
 # }}
 # .container {{
 #     width:100%; min-height:99vh;
-#     display:grid;
-#     grid-template-columns:1fr 1fr 1fr;
+#     display:grid; grid-template-columns:1fr 1fr 1fr;
 #     grid-template-rows:130px 220px 140px;
 #     gap:18px; row-gap:30px;
 # }}
 # .card {{
-#     background:linear-gradient(184deg,rgba(255,255,255,0.24) 12%,rgba(255,255,255,0.06) 83%);
+#     background:linear-gradient(184deg,rgba(255,255,255,0.22) 12%,rgba(255,255,255,0.09) 83%);
 #     border-radius:var(--card-radius);
 #     border:1px solid rgba(255,255,255,0.09);
 #     box-shadow:0 8px 32px rgba(10,28,46,0.12);
@@ -802,13 +797,11 @@ st.components.v1.html(html_template, height=770, scrolling=True)
 # .snow-bg {{
 #     pointer-events:none; position:absolute; left:0; top:0; width:100%; height:100%; z-index:0; opacity:0.5;
 # }}
-# .value-orange,
-# .value-blue {{
-#     font-size:54px!important;
-#     font-family:'Poppins','Segoe UI',Arial,sans-serif;
-#     font-weight:900!important; letter-spacing:0.030em; text-align:center; position:relative; z-index:2;
+# .value-orange, .value-blue {{
+#     font-size:54px!important; font-family:'Poppins','Segoe UI',Arial,sans-serif;
+#     font-weight:900!important; letter-spacing:0.03em; text-align:center; position:relative; z-index:2;
 #     background-clip:text!important; -webkit-background-clip:text!important; -webkit-text-fill-color:transparent; color:transparent!important;
-#     padding:4px 11px;
+#     padding:4px 11px; margin:0 auto; white-space:nowrap; width:100%;
 # }}
 # .value-orange {{
 #     background-image:linear-gradient(90deg,#ffd98a 0%,#fc7d1b 58%,#ffc473 100%);
@@ -829,17 +822,12 @@ st.components.v1.html(html_template, height=770, scrolling=True)
 #     background-size:200% 100%;
 # }}
 # .value-green {{
-#     font-size:56px!important;
-#     font-weight:900!important;
-#     font-family:'Poppins','Segoe UI',Arial,sans-serif;
+#     font-size:56px!important;font-weight:900!important;font-family:'Poppins','Segoe UI',Arial,sans-serif;
 #     background:linear-gradient(90deg,#aef9e2 0%,#00df6c 60%,#50e2ad 100%);
-#     -webkit-background-clip:text!important; background-clip:text!important; -webkit-text-fill-color:transparent; color:transparent!important;
-#     text-shadow:0 3px 8px #fffbe8, 0 5px 16px #00df6c, 0 10px 30px #aef9e2;
-#     -webkit-text-stroke:1.2px #1a8d56;
-#     filter:drop-shadow(0 4px 16px #00df6c);
-#     border-radius:10px; box-shadow:0 1.5px 14px #8cffca;
-#     animation:popval 1.11s cubic-bezier(0.14,0.86,0.29,1.08) both, shimmer 3.4s linear infinite;
-#     background-size:200% 100%; text-align:center; margin-bottom:4px;
+#     -webkit-background-clip:text!important;background-clip:text!important;-webkit-text-fill-color:transparent; color:transparent!important;
+#     text-shadow:0 3px 8px #fffbe8,0 5px 16px #00df6c,0 10px 30px #aef9e2; -webkit-text-stroke:1.2px #1a8d56;
+#     filter:drop-shadow(0 4px 16px #00df6c);border-radius:10px;box-shadow:0 1.5px 14px #8cffca; animation:popval 1.1s cubic-bezier(.14,.86,.29,1.08) both, shimmer 3.4s linear infinite;
+#     background-size:200% 100%;text-align:center;margin-bottom:4px;
 # }}
 # @keyframes popval {{
 #   0%{{opacity:0;transform:translateY(14px) scale(.93);}}
@@ -864,6 +852,9 @@ st.components.v1.html(html_template, height=770, scrolling=True)
 # .chart-container {{
 #     width:100%; height:110px; max-width:100%; overflow:hidden; box-sizing:border-box; margin:0; padding:0; display:block;
 # }}
+# .center-content {{
+#     width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0;margin:0;box-shadow:none;background:none;border:none;
+# }}
 # </style>
 # </head>
 # <body>
@@ -873,7 +864,7 @@ st.components.v1.html(html_template, height=770, scrolling=True)
 #     <div class="card top-card">
 #       <canvas class="snow-bg" id="snowdate"></canvas>
 #       <div class="center-content">
-#         <div class="value-orange" id="datevalue">{top_date}</div>
+#         <div class="value-orange oneline" id="datevalue">{top_date}</div>
 #         <div class="title-black">Date</div>
 #       </div>
 #     </div>
@@ -891,11 +882,10 @@ st.components.v1.html(html_template, height=770, scrolling=True)
 #         <div class="title-black">OEE %</div>
 #       </div>
 #     </div>
-#     <!-- Center/Middle Row -->
 #     <div class="card">
 #       <canvas class="snow-bg" id="snowrej"></canvas>
 #       <div class="center-content">
-#         <div class="value-orange" id="rejval">{left_rej_pct}%</div>
+#         <div class="value-orange" id="rejval">{left_rej_pct}</div>
 #         <div class="title-black">Rejection %</div>
 #       </div>
 #     </div>
@@ -907,9 +897,9 @@ st.components.v1.html(html_template, height=770, scrolling=True)
 #       </div>
 #     </div>
 #     <div class="card">
+#       <canvas class="snow-bg" id="snowspeed"></canvas>
 #       {gauge_html}
 #     </div>
-#     <!-- Bottom Row -->
 #     <div class="card bottom-card">
 #       <canvas class="snow-bg" id="snowrejcum"></canvas>
 #       <div class="center-content">
@@ -918,29 +908,30 @@ st.components.v1.html(html_template, height=770, scrolling=True)
 #       </div>
 #     </div>
 #     <div class="card bottom-card">
+#         <canvas class="snow-bg" id="snowsalechart"></canvas>
 #         <div class="chart-title-black">Sale Trend</div>
 #         <div id="sale_chart_container" class="chart-container">{sale_html}</div>
 #     </div>
 #     <div class="card bottom-card">
+#         <canvas class="snow-bg" id="snowrejchart"></canvas>
 #         <div class="chart-title-black">Rejection Trend</div>
 #         <div id="rej_chart_container" class="chart-container">{rej_html}</div>
 #     </div>
 # </div>
 # <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 # <script>
-# // Animate snow on canvas (braces fixed)
 # function makeSnow(canvas) {{
 #     if (!canvas) return;
 #     var ctx = canvas.getContext('2d');
 #     var w = canvas.width = canvas.offsetWidth, h = canvas.height = canvas.offsetHeight;
 #     var sn = [];
-#     for(var i=0;i<30;i++) sn.push({{x:Math.random()*w,y:Math.random()*h,r:1.4+Math.random()*2,dx:0,dy:1+Math.random()*1.6}});
+#     for(var i=0;i<36;i++) sn.push({{x:Math.random()*w,y:Math.random()*h,r:1.4+Math.random()*2,dx:0,dy:1+Math.random()*1.6}});
 #     function loop(){{
 #         ctx.clearRect(0,0,w,h);
 #         for(var i=0;i<sn.length;i++) {{
 #             ctx.beginPath();
 #             ctx.arc(sn[i].x,sn[i].y,sn[i].r,0,2*Math.PI);
-#             ctx.fillStyle="rgba(255,255,255,0.7)";
+#             ctx.fillStyle="rgba(255,255,255,0.65)";
 #             ctx.fill();
 #             sn[i].x += sn[i].dx*(0.4+Math.random()*0.7);
 #             sn[i].y += sn[i].dy;
@@ -952,10 +943,11 @@ st.components.v1.html(html_template, height=770, scrolling=True)
 #     loop();
 # }}
 # window.addEventListener("DOMContentLoaded",function() {{
-#     ["snowdate","snowsale","snowoee","snowrej","snowach","snowrejcum"]
-#     .forEach(function(id){{ var el=document.getElementById(id); if(el) setTimeout(function(){{makeSnow(el)}},120); }});
+#     [
+#       "snowdate","snowsale","snowoee","snowrej","snowach","snowrejcum",
+#       "snowspeed","snowsalechart","snowrejchart"
+#     ].forEach(function(id){{ var el=document.getElementById(id); if(el) setTimeout(function(){{makeSnow(el)}},120); }});
 # }});
-# // Animated number effect
 # function animateValue(element, start, end, duration, suffix="", prefix="") {{
 #     if(isNaN(Number(end))) {{ element.textContent = prefix + end + suffix; return; }}
 #     const range = end - start;
@@ -983,10 +975,4 @@ st.components.v1.html(html_template, height=770, scrolling=True)
 # """
 
 # st.components.v1.html(html_template, height=770, scrolling=True)
-
-
-
-
-
-
 
