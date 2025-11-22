@@ -9,7 +9,7 @@ from google.oauth2.service_account import Credentials
 
 st.set_page_config(page_title="Factory Dashboard (Exact Layout)", layout="wide")
 
-IMAGE_PATH = "winter.jpg"
+IMAGE_PATH = "snow.jpg"
 SPREADSHEET_ID = "168UoOWdTfOBxBvy_4QGymfiIRimSO2OoJdnzBDRPLvk"
 DASHBOARD_SHEET = "Dashboard"
 SALES_REPORT_SHEET = "Sales Report"
@@ -975,4 +975,5 @@ st.components.v1.html(html_template, height=770, scrolling=True)
 # """
 
 # st.components.v1.html(html_template, height=770, scrolling=True)
+
 
