@@ -242,7 +242,7 @@ fig_rej.add_trace(go.Scatter(
     line=dict(width=7, color=BUTTERFLY_ORANGE, shape="spline"),
     hoverinfo="x+y",
     opacity=1,
-    name="" # Blank name disables Plotly legend entry
+    name=""
 ))
 fig_rej.add_trace(go.Scatter(
     x=rej_df["date"], y=rej_df["rej amt"],
@@ -250,14 +250,14 @@ fig_rej.add_trace(go.Scatter(
     line=dict(width=17, color="rgba(252,125,27,0.13)", shape="spline"),
     hoverinfo="skip",
     opacity=1,
-    name="" # Also disables legend entry
+    name=""
 ))
 fig_rej.update_layout(
     margin=dict(t=24, b=40, l=10, r=10),
     paper_bgcolor="rgba(0,0,0,0)",
     plot_bgcolor="rgba(0,0,0,0)",
     height=135,
-    showlegend=False, # <== DISABLE LEGEND HERE
+    showlegend=False,
     xaxis=dict(showgrid=False, tickfont=dict(size=12), tickangle=-45, automargin=True),
     yaxis=dict(showgrid=False, tickfont=dict(size=12), automargin=True),
 )
@@ -266,7 +266,7 @@ sale_html = fig_sale.to_html(include_plotlyjs=False, full_html=False)
 rej_html = fig_rej.to_html(include_plotlyjs=False, full_html=False)
 bg_b64 = load_image_base64(IMAGE_PATH)
 
-# --- ADD THIS after loading bg_b64 ---
+# --- Full browser background ---
 st.markdown(
     f"""
     <style>
@@ -315,14 +315,14 @@ body {{
     margin:0;
     padding:0;
     font-family:'Poppins',sans-serif;
-    background: none !important; /* background is set globally above */
+    background: none !important;
     color:#091128;
 }}
 .container {{
     box-sizing: border-box;
     width: 100vw;
     height: 100vh;
-    padding: 5vw; /* Increase this to add more gap */
+    padding: 5vw; /* For large gap! */
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     grid-template-rows: 130px 220px 140px;
@@ -344,6 +344,18 @@ body {{
 .snow-bg {{
     pointer-events:none; position:absolute; left:0; top:0; width:100%; height:100%; z-index:0; opacity:0.50;
 }}
+.center-content {{
+    width:100%;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    padding:0;
+    margin:0;
+    background:none!important;
+    box-shadow:none!important;
+    border:none!important;
+}} /* NO panel, NO background, NO shadow, fully clear */
 .value-orange, .value-blue {{
     font-size:54px!important; font-family:'Poppins','Segoe UI',Arial,sans-serif;
     font-weight:900!important; letter-spacing:0.03em; text-align:center; position:relative; z-index:2;
@@ -398,9 +410,6 @@ body {{
 }}
 .chart-container {{
     width:100%; height:110px; max-width:100%; overflow:hidden; box-sizing:border-box; margin:0; padding:0; display:block;
-}}
-.center-content {{
-    width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0;margin:0;box-shadow:none;background:none;border:none;
 }}
 </style>
 </head>
@@ -522,6 +531,7 @@ window.addEventListener("DOMContentLoaded", function() {{
 """
 
 st.components.v1.html(html_template, height=770, scrolling=True)
+
 
 # import streamlit as st
 # import pandas as pd
@@ -790,6 +800,33 @@ st.components.v1.html(html_template, height=770, scrolling=True)
 # sale_html = fig_sale.to_html(include_plotlyjs=False, full_html=False)
 # rej_html = fig_rej.to_html(include_plotlyjs=False, full_html=False)
 # bg_b64 = load_image_base64(IMAGE_PATH)
+
+# # --- ADD THIS after loading bg_b64 ---
+# st.markdown(
+#     f"""
+#     <style>
+#     body, .stApp {{
+#         background: url("data:image/jpeg;base64,{bg_b64}") no-repeat center center fixed !important;
+#         background-size: cover !important;
+#         background-position: center center !important;
+#         min-height: 100vh !important;
+#         min-width: 100vw !important;
+#         width: 100vw !important;
+#         height: 100vh !important;
+#         overflow: hidden !important;
+#         margin: 0 !important;
+#         padding: 0 !important;
+#     }}
+#     .block-container {{
+#         padding-top: 0rem !important;
+#         padding-bottom: 0rem !important;
+#         padding-left: 0rem !important;
+#         padding-right: 0rem !important;
+#     }}
+#     </style>
+#     """, unsafe_allow_html=True
+# )
+
 # bg_url = f"data:image/png;base64,{bg_b64}" if bg_b64 else ""
 # top_date = latest[date_col].strftime("%d-%b-%Y")
 # top_today_sale = format_inr(today_sale)
@@ -811,16 +848,24 @@ st.components.v1.html(html_template, height=770, scrolling=True)
 # }}
 # body {{
 #     margin:0;
-#     padding:18px;
+#     padding:0;
 #     font-family:'Poppins',sans-serif;
-#     background: url("{bg_url}") center/cover no-repeat fixed;
+#     background: none !important; /* background is set globally above */
 #     color:#091128;
 # }}
 # .container {{
-#     width:100%; min-height:99vh;
-#     display:grid; grid-template-columns:1fr 1fr 1fr;
-#     grid-template-rows:130px 220px 140px;
-#     gap:18px; row-gap:30px;
+#     box-sizing: border-box;
+#     width: 100vw;
+#     height: 100vh;
+#     padding: 5vw; /* Increase this to add more gap */
+#     display: grid;
+#     grid-template-columns: 1fr 1fr 1fr;
+#     grid-template-rows: 130px 220px 140px;
+#     gap: 18px;
+#     row-gap: 30px;
+#     max-width: 1700px;
+#     max-height: 900px;
+#     margin: auto;
 # }}
 # .card {{
 #     background:linear-gradient(184deg,rgba(255,255,255,0.22) 12%,rgba(255,255,255,0.09) 83%);
