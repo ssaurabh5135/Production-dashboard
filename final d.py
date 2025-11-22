@@ -220,14 +220,15 @@ rej_df["rej amt"] = pd.to_numeric(
 ).fillna(0)
 rej_df = rej_df.dropna(subset=["date"]).sort_values("date")
 
-bar_gradients = pc.n_colors('rgb(34,139,230)', 'rgb(79,223,253)', len(sale_df), colortype='rgb')
+bar_gradients = pc.n_colors('rgb(79,223,253)', 'rgb(34,139,230)', len(sale_df), colortype='rgb')
 fig_sale = go.Figure()
 fig_sale.add_trace(go.Bar(
     x=sale_df["date"],
     y=sale_df["sale amount"],
     marker_color=bar_gradients,
-    marker_line_width=0,
-    opacity=0.9
+    marker_line_color='rgba(255,255,255,0.8)',
+    marker_line_width=1.5,
+    opacity=0.95
 ))
 fig_sale.update_layout(
     margin=dict(t=24, b=40, l=10, r=10),
@@ -238,14 +239,21 @@ fig_sale.update_layout(
     yaxis=dict(showgrid=False, tickfont=dict(size=12), automargin=True, title=""),
 )
 
-# ---- rejection trend - glowing orange spline ----
+# Double neon rejection trend line
 fig_rej = go.Figure()
 fig_rej.add_trace(go.Scatter(
-    x=rej_df["date"],
-    y=rej_df["rej amt"],
+    x=rej_df["date"], y=rej_df["rej amt"],
     mode="lines+markers",
-    marker=dict(size=0, color="rgba(252,125,27,1)"),
-    line=dict(width=8, color="rgba(252,125,27,0.85)", shape='spline'),
+    marker=dict(size=12, color="rgba(252,125,27,1)", line=dict(width=1.5, color="white")),
+    line=dict(width=7, color="rgba(252,125,27,0.98)", shape='spline'),
+    hoverinfo="x+y",
+    opacity=1
+))
+fig_rej.add_trace(go.Scatter(
+    x=rej_df["date"], y=rej_df["rej amt"],
+    mode="lines",
+    line=dict(width=18, color="rgba(252,125,27,0.19)", shape='spline'),
+    hoverinfo="skip",
     opacity=1
 ))
 fig_rej.update_layout(
@@ -259,10 +267,8 @@ fig_rej.update_layout(
 
 sale_html = fig_sale.to_html(include_plotlyjs=False, full_html=False)
 rej_html = fig_rej.to_html(include_plotlyjs=False, full_html=False)
-
 bg_b64 = load_image_base64(IMAGE_PATH)
 bg_url = f"data:image/png;base64,{bg_b64}" if bg_b64 else ""
-
 top_date = latest[date_col].strftime("%d-%b-%Y")
 top_today_sale = format_inr(today_sale)
 top_oee = f"{round(oee if pd.notna(oee) else 0, 1)}"
@@ -304,7 +310,7 @@ body {{
     position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center;
 }}
 .snow-bg {{
-    pointer-events:none; position:absolute; left:0; top:0; width:100%; height:100%; z-index:0; opacity:0.5;
+    pointer-events:none; position:absolute; left:0; top:0; width:100%; height:100%; z-index:0; opacity:0.52;
 }}
 .value-orange,
 .value-blue {{
@@ -315,19 +321,15 @@ body {{
     padding:4px 11px; margin:0 auto;
 }}
 .value-orange.oneline {{
-    white-space:nowrap; width:100%; text-align:center; margin:0 auto; overflow:hidden;
+    white-space:nowrap;width:100%;text-align:center;margin:0 auto;overflow:hidden;
 }}
 .value-green {{
-    font-size:56px!important; font-weight:900!important;
-    font-family:'Poppins','Segoe UI',Arial,sans-serif;
+    font-size:56px!important; font-weight:900!important; font-family:'Poppins','Segoe UI',Arial,sans-serif;
     background:linear-gradient(90deg,#aef9e2 0%,#00df6c 60%,#50e2ad 100%);
     -webkit-background-clip:text!important; background-clip:text!important; -webkit-text-fill-color:transparent; color:transparent!important;
-    text-shadow:0 3px 8px #fffbe8, 0 5px 16px #00df6c, 0 10px 30px #aef9e2;
-    -webkit-text-stroke:1.2px #1a8d56;
-    filter:drop-shadow(0 4px 16px #00df6c);
-    border-radius:10px; box-shadow:0 1.5px 14px #8cffca;
-    animation:popval 1.11s cubic-bezier(0.14,0.86,0.29,1.08) both, shimmer 3.4s linear infinite;
-    background-size:200% 100%; text-align:center; margin-bottom:4px;
+    text-shadow:0 3px 8px #fffbe8, 0 5px 16px #00df6c, 0 10px 30px #aef9e2;-webkit-text-stroke:1.2px #1a8d56;
+    filter:drop-shadow(0 4px 16px #00df6c);border-radius:10px;box-shadow:0 1.5px 14px #8cffca;
+    animation:popval 1.11s cubic-bezier(0.14,0.86,0.29,1.08) both, shimmer 3.4s linear infinite;background-size:200% 100%;text-align:center;margin-bottom:4px;
 }}
 @keyframes popval {{
   0%{{opacity:0;transform:translateY(14px) scale(.93);}}
@@ -421,7 +423,6 @@ body {{
 </div>
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 <script>
-// Animate snow on all overlays
 function makeSnow(canvas) {{
     if (!canvas) return;
     var ctx = canvas.getContext('2d');
@@ -477,7 +478,6 @@ window.addEventListener("DOMContentLoaded", function() {{
 """
 
 st.components.v1.html(html_template, height=770, scrolling=True)
-
 
 # import streamlit as st
 # import pandas as pd
@@ -976,4 +976,5 @@ st.components.v1.html(html_template, height=770, scrolling=True)
 # """
 
 # st.components.v1.html(html_template, height=770, scrolling=True)
+
 
