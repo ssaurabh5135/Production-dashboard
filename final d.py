@@ -1,5 +1,3 @@
-
-
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
@@ -244,7 +242,7 @@ fig_rej.add_trace(go.Scatter(
     line=dict(width=7, color=BUTTERFLY_ORANGE, shape="spline"),
     hoverinfo="x+y",
     opacity=1,
-    name="" # Blank name disables Plotly legend entry
+    name="" 
 ))
 fig_rej.add_trace(go.Scatter(
     x=rej_df["date"], y=rej_df["rej amt"],
@@ -252,14 +250,14 @@ fig_rej.add_trace(go.Scatter(
     line=dict(width=17, color="rgba(252,125,27,0.13)", shape="spline"),
     hoverinfo="skip",
     opacity=1,
-    name="" # Also disables legend entry
+    name=""
 ))
 fig_rej.update_layout(
     margin=dict(t=24, b=40, l=10, r=10),
     paper_bgcolor="rgba(0,0,0,0)",
     plot_bgcolor="rgba(0,0,0,0)",
     height=135,
-    showlegend=False, # <== DISABLE LEGEND HERE
+    showlegend=False,
     xaxis=dict(showgrid=False, tickfont=dict(size=12), tickangle=-45, automargin=True),
     yaxis=dict(showgrid=False, tickfont=dict(size=12), automargin=True),
 )
@@ -268,7 +266,6 @@ sale_html = fig_sale.to_html(include_plotlyjs=False, full_html=False)
 rej_html = fig_rej.to_html(include_plotlyjs=False, full_html=False)
 bg_b64 = load_image_base64(IMAGE_PATH)
 
-# --- ADD THIS after loading bg_b64 ---
 st.markdown(
     f"""
     <style>
@@ -317,14 +314,14 @@ body {{
     margin:0;
     padding:0;
     font-family:'Poppins',sans-serif;
-    background: none !important; /* background is set globally above */
+    background: none !important;
     color:#091128;
 }}
 .container {{
     box-sizing: border-box;
     width: 100vw;
     height: 100vh;
-    padding: 5vw; /* Increase this to add more gap */
+    padding: 5vw;
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     grid-template-rows: 130px 220px 140px;
@@ -334,49 +331,90 @@ body {{
     max-height: 900px;
     margin: auto;
 }}
+
+/* ⭐ FIXED BOX STYLE — EXACT SAME AS VS CODE */
 .card {{
-    background:linear-gradient(184deg,rgba(255,255,255,0.22) 12%,rgba(255,255,255,0.09) 83%);
-    border-radius:var(--card-radius);
-    border:1px solid rgba(255,255,255,0.09);
-    box-shadow:0 8px 32px rgba(10,28,46,0.12);
-    backdrop-filter:blur(8px) saturate(120%);
-    -webkit-backdrop-filter:blur(8px) saturate(120%);
-    position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    background: linear-gradient(184deg,rgba(255,255,255,0.13) 12%,rgba(255,255,255,0.04) 83%);
+    border-radius: 16px;
+    box-shadow: 0 6px 18px rgba(4, 8, 15, 0.13);
+    border: 1px solid rgba(255,255,255,0.08);
+    backdrop-filter: blur(6px) saturate(120%);
+    -webkit-backdrop-filter: blur(6px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
 }}
+
 .snow-bg {{
-    pointer-events:none; position:absolute; left:0; top:0; width:100%; height:100%; z-index:0; opacity:0.50;
+    pointer-events:none; 
+    position:absolute; 
+    left:0; top:0; 
+    width:100%; height:100%; 
+    z-index:0; 
+    opacity:0.50;
 }}
 .value-orange, .value-blue {{
-    font-size:54px!important; font-family:'Poppins','Segoe UI',Arial,sans-serif;
-    font-weight:900!important; letter-spacing:0.03em; text-align:center; position:relative; z-index:2;
-    background-clip:text!important; -webkit-background-clip:text!important; -webkit-text-fill-color:transparent; color:transparent!important;
-    padding:4px 11px; margin:0 auto; white-space:nowrap; width:100%;
+    font-size:54px!important; 
+    font-family:'Poppins','Segoe UI',Arial,sans-serif;
+    font-weight:900!important; 
+    letter-spacing:0.03em; 
+    text-align:center; 
+    position:relative; 
+    z-index:2;
+    background-clip:text!important; 
+    -webkit-background-clip:text!important; 
+    -webkit-text-fill-color:transparent; 
+    color:transparent!important;
+    padding:4px 11px; 
+    margin:0 auto; 
+    white-space:nowrap; 
+    width:100%;
 }}
 .value-orange {{
     background-image:linear-gradient(90deg,#ffd98a 0%,#fc7d1b 58%,#ffc473 100%);
-    text-shadow:0 2px 0 #fff, 0 6px 16px #fc7d1b, 0 1px 8px #fffbe8, 0 12px 38px #fc7d1b;
+    text-shadow:0 2px 0 #fff, 0 6px 16px #fc7d1b,
+                 0 1px 8px #fffbe8, 0 12px 38px #fc7d1b;
     -webkit-text-stroke:1.2px #b96000;
     filter:drop-shadow(0 4px 18px #fc7d1b);
-    border-radius:10px; box-shadow:0 1.5px 14px #ffd98a;
-    animation:popval 1.18s cubic-bezier(0.14,0.86,0.29,1.08) both, shimmer 3.2s linear infinite;
+    border-radius:10px; 
+    animation:popval 1.18s cubic-bezier(0.14,0.86,0.29,1.08) both,
+              shimmer 3.2s linear infinite;
     background-size:200% 100%;
 }}
 .value-blue {{
     background-image:linear-gradient(89deg,#b9e6ff 0%,#228be6 75%,#79cafc 100%);
-    text-shadow:0 2px 0 #fff, 0 0.5px 9px #79cafc, 0 6px 18px #228be6, 0 12px 38px #79cafc;
+    text-shadow:0 2px 0 #fff, 0 0.5px 9px #79cafc,
+                 0 6px 18px #228be6, 0 12px 38px #79cafc;
     -webkit-text-stroke:1.2px #1661a2;
     filter:drop-shadow(0 4px 18px #228be6);
-    border-radius:10px; box-shadow:0 1.5px 14px #b9e6ff;
-    animation:popval 1.1s cubic-bezier(0.14,0.86,0.29,1.08) both, shimmer 3.2s linear infinite;
+    border-radius:10px;
+    animation:popval 1.1s cubic-bezier(0.14,0.86,0.29,1.08) both,
+              shimmer 3.2s linear infinite;
     background-size:200% 100%;
 }}
 .value-green {{
-    font-size:56px!important;font-weight:900!important;font-family:'Poppins','Segoe UI',Arial,sans-serif;
+    font-size:56px!important;
+    font-weight:900!important;
+    font-family:'Poppins','Segoe UI',Arial,sans-serif;
     background:linear-gradient(90deg,#aef9e2 0%,#00df6c 60%,#50e2ad 100%);
-    -webkit-background-clip:text!important;background-clip:text!important;-webkit-text-fill-color:transparent; color:transparent!important;
-    text-shadow:0 3px 8px #fffbe8,0 5px 16px #00df6c,0 10px 30px #aef9e2; -webkit-text-stroke:1.2px #1a8d56;
-    filter:drop-shadow(0 4px 16px #00df6c);border-radius:10px;box-shadow:0 1.5px 14px #8cffca; animation:popval 1.1s cubic-bezier(.14,.86,.29,1.08) both, shimmer 3.4s linear infinite;
-    background-size:200% 100%;text-align:center;margin-bottom:4px;
+    -webkit-background-clip:text!important;
+    background-clip:text!important;
+    -webkit-text-fill-color:transparent;
+    color:transparent!important;
+    text-shadow:0 3px 8px #fffbe8,
+                 0 5px 16px #00df6c,
+                 0 10px 30px #aef9e2;
+    -webkit-text-stroke:1.2px #1a8d56;
+    filter:drop-shadow(0 4px 16px #00df6c);
+    border-radius:10px;
+    animation:popval 1.1s cubic-bezier(.14,.86,.29,1.08) both,
+              shimmer 3.4s linear infinite;
+    background-size:200% 100%;
+    text-align:center;
+    margin-bottom:4px;
 }}
 @keyframes popval {{
   0%{{opacity:0;transform:translateY(14px) scale(.93);}}
@@ -388,28 +426,42 @@ body {{
     0%{{background-position:-200% center;}}
     100%{{background-position:200% center;}}
 }}
-@media (max-width:1100px){{.container{{grid-template-columns:1fr;grid-template-rows:auto;}}}}
 .title-green {{
-    color:{GREEN}!important; font-size:26px!important; font-weight:750!important; margin-top:4px!important;
+    color:{GREEN}!important; 
+    font-size:26px!important; 
+    font-weight:750!important; 
+    margin-top:4px!important;
 }}
 .title-black {{
-    color:#191921!important; font-size:17px!important; font-weight:800!important; margin-top:7px!important; width:100%;text-align:center!important;
+    color:#191921!important; 
+    font-size:17px!important; 
+    font-weight:800!important; 
+    margin-top:7px!important; 
+    width:100%;text-align:center!important;
 }}
 .chart-title-black {{
-    color: #003!important; font-size:16px!important; font-weight:700!important; margin-bottom:3px!important; width:100%; text-align:left!important; padding-left:7px;
+    color: #003!important; 
+    font-size:16px!important; 
+    font-weight:700!important; 
+    margin-bottom:3px!important; 
+    width:100%; text-align:left!important; 
+    padding-left:7px;
 }}
 .chart-container {{
-    width:100%; height:110px; max-width:100%; overflow:hidden; box-sizing:border-box; margin:0; padding:0; display:block;
+    width:100%; height:110px; 
+    overflow:hidden; 
+    box-sizing:border-box;
+    margin:0; padding:0; 
+    display:block;
 }}
 .center-content {{
-    width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0;margin:0;box-shadow:none;background:none;border:none;
+    width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0;margin:0;
 }}
 </style>
 </head>
 <body>
 <div class="container">
 
-    <!-- Top Row -->
     <div class="card top-card">
       <canvas class="snow-bg" id="snowdate"></canvas>
       <div class="center-content">
@@ -427,7 +479,7 @@ body {{
     <div class="card top-card">
       <canvas class="snow-bg" id="snowoee"></canvas>
       <div class="center-content">
-        <div class="value-orange" id="oeevalue">{top_oee}%</div>
+        <div class="value-orange" id="oeevalue">{top_oee}</div>
         <div class="title-black">OEE %</div>
       </div>
     </div>
@@ -524,7 +576,3 @@ window.addEventListener("DOMContentLoaded", function() {{
 """
 
 st.components.v1.html(html_template, height=770, scrolling=True)
-
-
-
-
