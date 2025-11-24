@@ -1,4 +1,311 @@
+import streamlit as st
+import pandas as pd
+import plotly.graph_objects as go
+import plotly.colors as pc
+import base64
+from pathlib import Path
+import gspread
+from google.oauth2.service_account import Credentials
 
+st.set_page_config(page_title="Factory Dashboard (Exact Layout)", layout="wide")
+
+IMAGE_PATH = "nature.jpg"
+SPREADSHEET_ID = "168UoOWdTfOBxBvy_4QGymfiIRimSO2OoJdnzBDRPLvk"
+DASHBOARD_SHEET = "Dashboard"
+SALES_REPORT_SHEET = "Sales Report"
+TARGET_SALE = 19_92_00_000
+
+def load_image_base64(path: str) -> str:
+    try:
+        data = Path(path).read_bytes()
+        return base64.b64encode(data).decode()
+    except Exception:
+        return ""
+
+def format_inr(n):
+    try:
+        x = str(int(float(str(n).replace(",", ""))))
+    except Exception:
+        return str(n)
+    if len(x) <= 3:
+        return x
+    last3 = x[-3:]
+    rest = x[:-3]
+    rest = ''.join([rest[::-1][i:i+2][::-1] + ',' for i in range(0, len(rest), 2)][::-1])
+    return rest + last3
+
+def ensure_pct(x):
+    try:
+        v = float(str(x).replace("%", "").replace(",", ""))
+    except Exception:
+        return 0.0
+    return v * 100 if v <= 5 else v
+
+# Google auth and load data (same as before)
+try:
+    creds_info = st.secrets["gcp_service_account"]
+    SCOPES = [
+        "https://www.googleapis.com/auth/spreadsheets",
+        "https://www.googleapis.com/auth/drive",
+    ]
+    creds = Credentials.from_service_account_info(creds_info, scopes=SCOPES)
+    client = gspread.authorize(creds)
+except Exception as e:
+    st.error(f"Google auth failed: {e}")
+    st.stop()
+
+try:
+    sh = client.open_by_key(SPREADSHEET_ID)
+except Exception as e:
+    st.error(f"Cannot open spreadsheet: {e}")
+    st.stop()
+
+try:
+    dash_ws = sh.worksheet(DASHBOARD_SHEET)
+    rows = dash_ws.get_values("A1:H")
+except Exception as e:
+    st.error(f"Cannot read Dashboard sheet: {e}")
+    st.stop()
+
+if not rows or len(rows) < 2:
+    st.error("Dashboard sheet has no data (A1:H).")
+    st.stop()
+
+header = rows[0]
+data_rows = [r for r in rows[1:] if any(r)]
+dash_data = [dict(zip(header, r)) for r in data_rows]
+df = pd.DataFrame(dash_data)
+df.columns = df.columns.str.strip().str.lower()
+
+expected_cols = [
+    "date",
+    "today's sale",
+    "oee %",
+    "plan vs actual %",
+    "rejection amount (daybefore)",
+    "rejection %",
+    "rejection amount (cumulative)",
+    "total sales (cumulative)",
+]
+if list(df.columns[:8]) != expected_cols:
+    pass  # You may add error handling if needed
+
+date_col = df.columns[0]
+df[date_col] = pd.to_datetime(df[date_col], errors="coerce")
+for c in df.columns[1:]:
+    df[c] = pd.to_numeric(df[c].astype(str).str.replace(",", ""), errors="coerce")
+df = df.dropna(subset=[date_col])
+if df.empty:
+    st.error("No valid dates in Dashboard sheet.")
+    st.stop()
+
+df = df.sort_values(date_col)
+latest = df.iloc[-1]
+
+(
+    date_col,
+    today_col,
+    oee_col,
+    plan_col,
+    rej_day_col,
+    rej_pct_col,
+    rej_cum_col,
+    total_cum_col,
+) = df.columns[:8]
+
+today_sale = latest[today_col]
+raw_oee = latest[oee_col]
+oee = ensure_pct(raw_oee)
+raw_plan = latest[plan_col]
+plan_vs_actual = ensure_pct(raw_plan)
+rej_day = latest[rej_day_col]
+raw_rej_pct = latest[rej_pct_col]
+rej_pct = ensure_pct(raw_rej_pct)
+rej_cum = latest[rej_cum_col]
+cum_series = df[total_cum_col].dropna()
+total_cum = cum_series.iloc[-1] if not cum_series.empty else 0
+achieved_pct_val = round(total_cum / TARGET_SALE * 100, 2) if TARGET_SALE else 0
+
+BUTTERFLY_ORANGE = "#fc7d1b"
+BLUE = "#228be6"
+GREEN = "#009e4f"
+
+# Gauge figure
+gauge = go.Figure(
+    go.Indicator(
+        mode="gauge+number",
+        value=achieved_pct_val,
+        number={"suffix": "%", "font": {"size": 44, "color": GREEN}},
+        gauge={
+            "axis": {"range": [0, 100]},
+            "bar": {"color": GREEN},
+            "steps": [
+                {"range": [0, 60], "color": "#c4eed1"},
+                {"range": [60, 85], "color": "#7ee2b7"},
+                {"range": [85, 100], "color": GREEN},
+            ],
+            "threshold": {"line": {"color": "#111", "width": 4}, "value": achieved_pct_val},
+        },
+    )
+)
+gauge.update_layout(margin=dict(t=0, b=0, l=0, r=0), height=170, width=300)
+
+# Load sales report sheet for graphs
+try:
+    sr_ws = sh.worksheet(SALES_REPORT_SHEET)
+    sr_rows = sr_ws.get_values()
+except Exception:
+    sr_rows = []
+
+sale_df = None
+rej_df = None
+if sr_rows and len(sr_rows) > 1:
+    sale_records = []
+    rej_records = []
+    for r in sr_rows[1:]:
+        if len(r) >= 3:
+            date_str = (r[0] or "").strip()
+            sales_type = (r[1] or "").strip().upper()
+            sale_amt = r[2]
+            if date_str and sales_type == "OEE":
+                sale_records.append({"date": date_str, "sale amount": sale_amt})
+        if len(r) >= 12:
+            rej_date_str = (r[10] or "").strip()
+            rej_amt = r[11]
+            if rej_date_str and rej_amt not in (None, ""):
+                rej_records.append({"date": rej_date_str, "rej amt": rej_amt})
+    if sale_records:
+        sale_df = pd.DataFrame(sale_records)
+    if rej_records:
+        rej_df = pd.DataFrame(rej_records)
+
+if sale_df is None or sale_df.empty:
+    sale_df = pd.DataFrame({"date": df[date_col], "sale amount": df[today_col]})
+if rej_df is None or rej_df.empty:
+    rej_df = pd.DataFrame({"date": df[date_col], "rej amt": df[rej_day_col]})
+
+sale_df["date"] = pd.to_datetime(sale_df["date"], errors="coerce")
+sale_df["sale amount"] = pd.to_numeric(
+    sale_df["sale amount"].astype(str).str.replace(",", ""), errors="coerce"
+).fillna(0)
+sale_df = sale_df.dropna(subset=["date"]).sort_values("date")
+
+rej_df["date"] = pd.to_datetime(rej_df["date"], errors="coerce")
+rej_df["rej amt"] = pd.to_numeric(
+    rej_df["rej amt"].astype(str).str.replace(",", ""), errors="coerce"
+).fillna(0)
+rej_df = rej_df.dropna(subset=["date"]).sort_values("date")
+
+# Sale Trend Chart
+bar_gradients = pc.n_colors('rgb(34,139,230)', 'rgb(79,223,253)', len(sale_df), colortype='rgb')
+fig_sale = go.Figure()
+fig_sale.add_trace(go.Bar(
+    x=sale_df["date"],
+    y=sale_df["sale amount"],
+    marker_color=bar_gradients,
+    marker_line_width=0,
+    opacity=0.97
+))
+fig_sale.update_layout(
+    margin=dict(t=24, b=40, l=10, r=10),
+    paper_bgcolor="rgba(0,0,0,0)",
+    plot_bgcolor="rgba(0,0,0,0)",
+    height=135,
+    xaxis=dict(showgrid=False, tickfont=dict(size=12), tickangle=-45, automargin=True),
+    yaxis=dict(showgrid=False, tickfont=dict(size=12), automargin=True),
+)
+
+# Rejection Trend Chart
+fig_rej = go.Figure()
+fig_rej.add_trace(go.Scatter(
+    x=rej_df["date"], y=rej_df["rej amt"],
+    mode="lines+markers",
+    marker=dict(size=10, color=BUTTERFLY_ORANGE, line=dict(width=1.5, color="#fff")),
+    line=dict(width=7, color=BUTTERFLY_ORANGE, shape="spline"),
+    hoverinfo="x+y",
+    opacity=1,
+    name=""
+))
+fig_rej.add_trace(go.Scatter(
+    x=rej_df["date"], y=rej_df["rej amt"],
+    mode="lines",
+    line=dict(width=17, color="rgba(252,125,27,0.13)", shape="spline"),
+    hoverinfo="skip",
+    opacity=1,
+    name=""
+))
+fig_rej.update_layout(
+    margin=dict(t=24, b=40, l=10, r=10),
+    paper_bgcolor="rgba(0,0,0,0)",
+    plot_bgcolor="rgba(0,0,0,0)",
+    height=135,
+    showlegend=False,
+    xaxis=dict(showgrid=False, tickfont=dict(size=12), tickangle=-45, automargin=True),
+    yaxis=dict(showgrid=False, tickfont=dict(size=12), automargin=True),
+)
+
+# Background image style (optional)
+bg_b64 = load_image_base64(IMAGE_PATH)
+if bg_b64:
+    st.markdown(
+        f"""
+        <style>
+        body, .stApp {{
+            background: url("data:image/jpeg;base64,{bg_b64}") no-repeat center center fixed !important;
+            background-size: cover !important;
+            background-position: center center !important;
+            min-height: 100vh !important;
+            min-width: 100vw !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            overflow: hidden !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }}
+        .block-container {{
+            padding-top: 0rem !important;
+            padding-bottom: 0rem !important;
+            padding-left: 0rem !important;
+            padding-right: 0rem !important;
+        }}
+        </style>
+        """, unsafe_allow_html=True
+    )
+
+# Format data for display
+top_today_sale = format_inr(today_sale)
+top_oee = f"{round(oee if pd.notna(oee) else 0, 1)}%"
+left_rej_pct = f"{rej_pct: .1f}%"
+bottom_rej_cum = format_inr(rej_cum)
+top_date = latest[date_col].strftime("%d-%b-%Y")
+rej_day_fmt = format_inr(rej_day)
+
+# Render dashboard with Streamlit native layout using columns
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    st.markdown("### Today's Sale")
+    st.markdown(f"<h1 style='color:#228be6;'>{'₹ ' + top_today_sale}</h1>", unsafe_allow_html=True)
+    st.markdown("### Achieved %")
+    st.plotly_chart(gauge, use_container_width=True)
+    st.markdown("### Sale Trend")
+    st.plotly_chart(fig_sale, use_container_width=True)
+
+with col2:
+    st.markdown("### Rejection Amount")
+    st.markdown(f"<h2 style='color:#fc7d1b;'>{'₹ ' + rej_day_fmt}</h2>", unsafe_allow_html=True)
+    st.markdown("### Rejection %")
+    st.markdown(f"<h2 style='color:#fc7d1b;'>{left_rej_pct}</h2>", unsafe_allow_html=True)
+    st.markdown("### Rejection Trend")
+    st.plotly_chart(fig_rej, use_container_width=True)
+
+with col3:
+    st.markdown("### Date")
+    st.markdown(f"<h2 style='color:#fc7d1b;'>{top_date}</h2>", unsafe_allow_html=True)
+    st.markdown("### OEE %")
+    st.markdown(f"<h2 style='color:#fc7d1b;'>{top_oee}</h2>", unsafe_allow_html=True)
+    st.markdown("### Rejection (Cumulative)")
+    st.markdown(f"<h2 style='color:#fc7d1b;'>{bottom_rej_cum}</h2>", unsafe_allow_html=True)
 
 
 
@@ -580,6 +887,7 @@
 # """
 
 # st.components.v1.html(html_template, height=770, scrolling=True)
+
 
 
 
