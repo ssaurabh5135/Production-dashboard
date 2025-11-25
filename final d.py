@@ -522,22 +522,14 @@ body {{
         <div class="chart-title-black">Rejection Trend</div>
         <div id="rej_chart_container" class="chart-container">{rej_html}</div>
     </div>
-
+    
     <div class="card bottom-card">
-      <canvas class="snow-bg" id="snowrejamt"></canvas>
+      <canvas class="snow-bg" id="snowrejcum"></canvas>
       <div class="center-content">
-        <div class="value-orange">₹ {rej_day_formatted}</div>
-        <div class="title-black">Rejection Amount</div>
+        <div class="value-orange" id="rejcum">{bottom_rej_cum}</div>
+        <div class="title-black">Rejection (Cumulative)</div>
       </div>
     </div>
-    
-    # <div class="card bottom-card">
-    #   <canvas class="snow-bg" id="snowrejcum"></canvas>
-    #   <div class="center-content">
-    #     <div class="value-orange" id="rejcum">{bottom_rej_cum}</div>
-    #     <div class="title-black">Rejection (Cumulative)</div>
-    #   </div>
-    # </div>
     
 </div>
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
@@ -867,6 +859,7 @@ st.components.v1.html(html_template, height=770, scrolling=True)
 # """
 
 # st.components.v1.html(html_template, height=1100, scrolling=False)
+
 
 
 
