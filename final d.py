@@ -1,5 +1,5 @@
 
-[PART 1 START]
+
 
 import streamlit as st
 import pandas as pd
@@ -149,9 +149,9 @@ working_days = sum(
 )
 indent_value = working_days * DAILY_TARGET
 
-[PART 1 END]
 
-[PART 2 START]
+
+
 
 # COLORS
 BUTTERFLY_ORANGE = "#fc7d1b"
@@ -304,9 +304,7 @@ rej_html = fig_rej.to_html(include_plotlyjs=False, full_html=False)
 
 bg_b64 = load_image_base64(IMAGE_PATH)
 
-[PART 2 END]
 
-[PART 3 START]
 
 st.markdown(
     f"""
@@ -489,9 +487,6 @@ body {{
 <body>
 <div class="container">
 
-[PART 3 END]
-
-[PART 4 START]
 
     <!-- ===================== TOP ROW ===================== -->
 
@@ -2013,4 +2008,5 @@ st.components.v1.html(html_template, height=770, scrolling=True)
 # # """
 
 # # st.components.v1.html(html_template, height=770, scrolling=True)
+
 
