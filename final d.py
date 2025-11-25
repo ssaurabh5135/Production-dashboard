@@ -660,6 +660,99 @@ window.addEventListener("DOMContentLoaded",function() {{
     }});
 }});
 
+function animateValue(element, start, end, duration, suffix="", prefix="") {{
+    if (isNaN(Number(end))) {{ 
+        element.textContent = prefix + end + suffix; 
+        return; 
+    }}
+    const range = end - start;
+    let startTime = null;
+    function step(now) {{
+        if (!startTime) startTime = now;
+        let progress = Math.min((now - startTime) / duration, 1);
+        let value = Math.floor(start + range * progress);
+        element.textContent = prefix + value.toLocaleString('en-IN') + suffix;
+        if (progress < 1) requestAnimationFrame(step);
+        else element.textContent = prefix + Number(end).toLocaleString('en-IN') + suffix;
+    }}
+    requestAnimationFrame(step);
+}}
+
+window.addEventListener("DOMContentLoaded", function() {{
+    animateValue(
+        document.getElementById('salevalue'),
+        0,
+        parseInt("{top_today_sale.replace(',', '')}"),
+        1100,
+        "",
+        "₹ "
+    );
+
+    animateValue(
+        document.getElementById('oeevalue'),
+        0,
+        parseFloat("{top_oee.replace('%', '')}"),
+        1100,
+        "%"
+    );
+
+    // Rejection amount box
+    animateValue(
+        document.getElementById('rejamtvalue'),
+        0,
+        parseInt("{left_rej_amt.replace(',', '')}"),
+        1100,
+        "",
+        "₹ "
+    );
+
+    // Rejection % box
+    animateValue(
+        document.getElementById('rejpctvalue'),
+        0,
+        parseFloat("{left_rej_pct.replace('%', '')}"),
+        1100,
+        "%"
+    );
+
+    animateValue(
+        document.getElementById('rejcum'),
+        0,
+        parseInt("{bottom_rej_cum.replace(',', '')}"),
+        1100,
+        "",
+        "₹ "
+    );
+
+    // Sale cumulative
+    animateValue(
+        document.getElementById('cumsalevalue'),
+        0,
+        parseInt("{format_inr(total_cum).replace(',', '')}"),
+        1100,
+        "",
+        "₹ "
+    );
+
+    // Gap
+    animateValue(
+        document.getElementById('gapvalue'),
+        0,
+        parseInt("{format_inr(TARGET_SALE - total_cum).replace(',', '')}"),
+        1100,
+        "",
+        "₹ "
+    );
+}});
+</script>
+
+</body>
+</html>
+"""
+
+# -------- RENDER UPDATED HTML -------- #
+
+st.components.v1.html(html_template, height=900, scrolling=True)
 
 
 
@@ -1252,6 +1345,7 @@ window.addEventListener("DOMContentLoaded",function() {{
 # """
 
 # st.components.v1.html(html_template, height=770, scrolling=True)
+
 
 
 
