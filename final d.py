@@ -484,7 +484,7 @@ body {{
     <div class="card top-card">
       <canvas class="snow-bg" id="snowdate"></canvas>
       <div class="center-content">
-        <div class="value-blue oneline" id="datevalue">{top_date}</div>
+        <div class="value-blue" id="datevalue" style="font-size:30px!important;">{top_date}</div>
         <div class="title-black">Date</div>
       </div>
     </div>
@@ -858,6 +858,7 @@ st.components.v1.html(html_template, height=770, scrolling=True)
 # """
 
 # st.components.v1.html(html_template, height=1100, scrolling=False)
+
 
 
 
