@@ -435,7 +435,7 @@ body {{
     margin-top:4px!important;
 }}
 .title-black {{
-    color:#191921!important; 
+    color:#f7f5fa!important; 
     font-size:17px!important; 
     font-weight:800!important; 
     margin-top:7px!important; 
@@ -848,6 +848,7 @@ st.components.v1.html(html_template, height=770, scrolling=True)
 # """
 
 # st.components.v1.html(html_template, height=1100, scrolling=False)
+
 
 
 
