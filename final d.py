@@ -606,11 +606,14 @@ body {{
     </div>
 
     <!-- NEW BOX: GAP -->
+
+    
+    
     <div class="card">
       <canvas class="snow-bg" id="snowgap"></canvas>
       <div class="center-content">
-        <div class="value-orange" id="gapvalue">₹ </div>
-        <div class="title-black">Gap</div>
+        <div class="value-blue" style="font-size:40px!important;"> ... </div>
+        <div class="title-black"></div>
       </div>
     </div>
 
@@ -1347,6 +1350,7 @@ st.components.v1.html(html_template, height=900, scrolling=True)
 # """
 
 # st.components.v1.html(html_template, height=770, scrolling=True)
+
 
 
 
