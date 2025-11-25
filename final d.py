@@ -566,7 +566,7 @@ body {{
     <div class="card top-card">
       <canvas class="snow-bg" id="snowcopq"></canvas>
       <div class="center-content">
-        <div class="value-blue" style="font-size:40px!important;">COPQ Updating...</div>
+        <div class="value-blue" style="font-size:40px!important;">COPQ Pending...</div>
       </div>
     </div>
 
@@ -1350,6 +1350,7 @@ st.components.v1.html(html_template, height=900, scrolling=True)
 # """
 
 # st.components.v1.html(html_template, height=770, scrolling=True)
+
 
 
 
