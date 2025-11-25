@@ -482,10 +482,17 @@ body {{
     </div>
     
     <div class="card top-card">
-      <canvas class="snow-bg" id="snowdate"></canvas>
+      <canvas class="snow-bg" id="snowoee"></canvas>
       <div class="center-content">
-        <div class="value-blue" id="datevalue" style="font-size:30px!important;">{top_date}</div>
-        <div class="title-black">Date</div>
+        <div class="value-blue" id="oeevalue">{top_oee}</div>
+        <div class="title-black">OEE %</div>
+      </div>
+    </div>
+
+    <div class="card top-card">
+      <canvas class="snow-bg" id="snowcopq"></canvas>
+      <div class="center-content">
+        <div class="value-blue" style="font-size:40px!important;">COPQ Updating...</div>
       </div>
     </div>
     
@@ -502,13 +509,7 @@ body {{
       </div>
     </div>
     
-    <div class="card top-card">
-      <canvas class="snow-bg" id="snowoee"></canvas>
-      <div class="center-content">
-        <div class="value-blue" id="oeevalue">{top_oee}</div>
-        <div class="title-black">OEE %</div>
-      </div>
-    </div>
+    
 
     <div class="card bottom-card">
         <canvas class="snow-bg" id="snowsalechart"></canvas>
@@ -858,6 +859,7 @@ st.components.v1.html(html_template, height=770, scrolling=True)
 # """
 
 # st.components.v1.html(html_template, height=1100, scrolling=False)
+
 
 
 
