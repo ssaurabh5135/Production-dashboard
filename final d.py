@@ -609,7 +609,7 @@ body {{
     <div class="card">
       <canvas class="snow-bg" id="snowgap"></canvas>
       <div class="center-content">
-        <div class="value-orange" id="gapvalue">₹ {format_inr(TARGET_SALE - total_cum)}</div>
+        <div class="value-orange" id="gapvalue">₹ {format_inr()}</div>
         <div class="title-black">Gap</div>
       </div>
     </div>
@@ -1347,6 +1347,7 @@ st.components.v1.html(html_template, height=900, scrolling=True)
 # """
 
 # st.components.v1.html(html_template, height=770, scrolling=True)
+
 
 
 
