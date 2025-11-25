@@ -1,3 +1,646 @@
+import streamlit as st
+import pandas as pd
+import plotly.graph_objects as go
+import plotly.colors as pc
+import base64
+from pathlib import Path
+import gspread
+from google.oauth2.service_account import Credentials
+from datetime import datetime, timedelta
+
+st.set_page_config(page_title="Factory Dashboard (Exact Layout)", layout="wide")
+
+IMAGE_PATH = "nature.jpg"
+SPREADSHEET_ID = "168UoOWdTfOBxBvy_4QGymfiIRimSO2OoJdnzBDRPLvk"
+DASHBOARD_SHEET = "Dashboard"
+SALES_REPORT_SHEET = "Sales Report"
+TARGET_SALE = 19_92_00_000
+DAILY_TARGET = 6670000  # 66.7 lakh
+
+def load_image_base64(path: str) -> str:
+    try:
+        data = Path(path).read_bytes()
+        return base64.b64encode(data).decode()
+    except Exception:
+        return ""
+
+def format_inr(n):
+    try:
+        x = str(int(float(str(n).replace(",", ""))))
+    except Exception:
+        return str(n)
+    if len(x) <= 3:
+        return x
+    last3 = x[-3:]
+    rest = x[:-3]
+    rest = ''.join(
+        [rest[::-1][i:i+2][::-1] + ',' for i in range(0, len(rest), 2)][::-1]
+    )
+    return rest + last3
+
+def ensure_pct(x):
+    try:
+        v = float(str(x).replace("%", "").replace(",", ""))
+    except Exception:
+        return 0.0
+    return v * 100 if v <= 5 else v
+
+try:
+    creds_info = st.secrets["gcp_service_account"]
+    SCOPES = [
+        "https://www.googleapis.com/auth/spreadsheets",
+        "https://www.googleapis.com/auth/drive",
+    ]
+    creds = Credentials.from_service_account_info(creds_info, scopes=SCOPES)
+    client = gspread.authorize(creds)
+except Exception as e:
+    st.error(f"Google auth failed: {e}")
+    st.stop()
+
+try:
+    sh = client.open_by_key(SPREADSHEET_ID)
+except Exception as e:
+    st.error(f"Cannot open spreadsheet: {e}")
+    st.stop()
+
+try:
+    dash_ws = sh.worksheet(DASHBOARD_SHEET)
+    rows = dash_ws.get_values("A1:H")
+except Exception as e:
+    st.error(f"Cannot read Dashboard sheet: {e}")
+    st.stop()
+
+if not rows or len(rows) < 2:
+    st.error("Dashboard sheet has no data (A1:H).")
+    st.stop()
+
+header = rows[0]
+data_rows = [r for r in rows[1:] if any(r)]
+dash_data = [dict(zip(header, r)) for r in data_rows]
+df = pd.DataFrame(dash_data)
+df.columns = df.columns.str.strip().str.lower()
+
+expected_cols = [
+    "date",
+    "today's sale",
+    "oee %",
+    "plan vs actual %",
+    "rejection amount (daybefore)",
+    "rejection %",
+    "rejection amount (cumulative)",
+    "total sales (cumulative)",
+]
+
+date_col = df.columns[0]
+df[date_col] = pd.to_datetime(df[date_col], errors="coerce")
+
+for c in df.columns[1:]:
+    df[c] = pd.to_numeric(df[c].astype(str).replace(",", ""), errors="coerce")
+
+df = df.dropna(subset=[date_col])
+df = df.sort_values(date_col)
+latest = df.iloc[-1]
+
+cols = df.columns.tolist()
+(
+    date_col,
+    today_col,
+    oee_col,
+    plan_col,
+    rej_day_col,
+    rej_pct_col,
+    rej_cum_col,
+    total_cum_col,
+) = cols[:8]
+
+today_sale = latest[today_col]
+raw_oee = latest[oee_col]
+oee = ensure_pct(raw_oee)
+raw_plan = latest[plan_col]
+plan_vs_actual = ensure_pct(raw_plan)
+rej_day_amount = latest[rej_day_col]
+raw_rej_pct = latest[rej_pct_col]
+rej_pct = ensure_pct(raw_rej_pct)
+rej_cum = latest[rej_cum_col]
+
+cum_series = df[total_cum_col].dropna()
+total_cum = cum_series.iloc[-1] if not cum_series.empty else 0
+
+achieved_pct_val = round(total_cum / TARGET_SALE * 100, 2) if TARGET_SALE else 0
+
+# ---------- INDENT CALCULATION (START OF MONTH TO YESTERDAY) ---------- #
+
+today = datetime.today().date()
+yesterday = today - timedelta(days=1)
+start_month = today.replace(day=1)
+
+working_days = 0
+d = start_month
+while d <= yesterday:
+    if d.weekday() != 6:  # 6 = Sunday
+        working_days += 1
+    d += timedelta(days=1)
+
+indent_value = working_days * DAILY_TARGET
+
+BUTTERFLY_ORANGE = "#fc7d1b"
+BLUE = "#228be6"
+GREEN = "#009e4f"
+
+# ---------- SPEEDOMETER (Achieved % in center) ---------- #
+
+gauge = go.Figure(
+    go.Indicator(
+        mode="gauge+number",
+        value=achieved_pct_val,
+        number={
+            "suffix": "%",
+            "font": {
+                "size": 48,
+                "color": GREEN,
+                "family": "Poppins",
+                "weight": "bold",
+            },
+        },
+        domain={"x": [0, 1], "y": [0, 1]},
+        gauge={
+            "shape": "angular",
+            "axis": {
+                "range": [0, 100],
+                "tickvals": [0, 25, 50, 75, 100],
+                "ticktext": ["0%", "25%", "50%", "75%", "100%"],
+            },
+            "bar": {"color": GREEN, "thickness": 0.38},
+            "bgcolor": "rgba(0,0,0,0)",
+            "steps": [
+                {"range": [0, 60], "color": "#c4eed1"},
+                {"range": [60, 85], "color": "#7ee2b7"},
+                {"range": [85, 100], "color": GREEN},
+            ],
+            "threshold": {
+                "line": {"color": "#111", "width": 5},
+                "value": achieved_pct_val,
+            },
+        },
+    )
+)
+
+gauge.update_layout(
+    paper_bgcolor="rgba(0,0,0,0)",
+    plot_bgcolor="rgba(0,0,0,0)",
+    margin=dict(t=10, b=30, l=10, r=10),
+    height=170,
+    width=300,
+)
+gauge_html = gauge.to_html(include_plotlyjs="cdn", full_html=False)
+
+# ---------- READ SALES REPORT ---------- #
+
+try:
+    sr_ws = sh.worksheet(SALES_REPORT_SHEET)
+    sr_rows = sr_ws.get_values()
+except Exception:
+    sr_rows = []
+
+sale_df = None
+rej_df = None
+
+if sr_rows and len(sr_rows) > 1:
+    sale_records = []
+    rej_records = []
+    for r in sr_rows[1:]:
+        if len(r) >= 3:
+            date_str = (r[0] or "").strip()
+            sales_type = (r[1] or "").strip().upper()
+            sale_amt = r[2]
+            if date_str and sales_type == "OEE":
+                sale_records.append({"date": date_str, "sale amount": sale_amt})
+        if len(r) >= 12:
+            rej_date_str = (r[10] or "").strip()
+            rej_amt = r[11]
+            if rej_date_str and rej_amt not in (None, ""):
+                rej_records.append({"date": rej_date_str, "rej amt": rej_amt})
+
+    if sale_records:
+        sale_df = pd.DataFrame(sale_records)
+
+    if rej_records:
+        rej_df = pd.DataFrame(rej_records)
+
+if sale_df is None or sale_df.empty:
+    sale_df = pd.DataFrame({"date": df[date_col], "sale amount": df[today_col]})
+
+if rej_df is None or rej_df.empty:
+    rej_df = pd.DataFrame({"date": df[date_col], "rej amt": df[rej_day_col]})
+
+sale_df["date"] = pd.to_datetime(sale_df["date"], errors="coerce")
+sale_df["sale amount"] = pd.to_numeric(
+    sale_df["sale amount"].astype(str).str.replace(",", ""), errors="coerce"
+).fillna(0)
+sale_df = sale_df.dropna(subset=["date"]).sort_values("date")
+
+rej_df["date"] = pd.to_datetime(rej_df["date"], errors="coerce")
+rej_df["rej amt"] = pd.to_numeric(
+    rej_df["rej amt"].astype(str).str.replace(",", ""), errors="coerce"
+).fillna(0)
+rej_df = rej_df.dropna(subset=["date"]).sort_values("date")
+
+# ---------- SALE TREND GRAPH ---------- #
+
+bar_gradients = pc.n_colors(
+    'rgb(34,139,230)', 'rgb(79,223,253)',
+    len(sale_df), colortype='rgb'
+)
+
+fig_sale = go.Figure()
+fig_sale.add_trace(go.Bar(
+    x=sale_df["date"],
+    y=sale_df["sale amount"],
+    marker_color=bar_gradients,
+    marker_line_width=0,
+    opacity=0.97
+))
+
+fig_sale.update_layout(
+    margin=dict(t=24, b=40, l=10, r=10),
+    paper_bgcolor="rgba(0,0,0,0)",
+    plot_bgcolor="rgba(0,0,0,0)",
+    height=135,
+    xaxis=dict(showgrid=False, tickfont=dict(size=12), tickangle=-45, automargin=True),
+    yaxis=dict(showgrid=False, tickfont=dict(size=12), automargin=True),
+)
+
+# ---------- REJECTION TREND GRAPH ---------- #
+
+fig_rej = go.Figure()
+fig_rej.add_trace(go.Scatter(
+    x=rej_df["date"], 
+    y=rej_df["rej amt"],
+    mode="lines+markers",
+    marker=dict(size=10, color="#fc7d1b", line=dict(width=1.5, color="#fff")),
+    line=dict(width=7, color="#fc7d1b", shape="spline"),
+    hoverinfo="x+y",
+    opacity=1,
+))
+fig_rej.add_trace(go.Scatter(
+    x=rej_df["date"], 
+    y=rej_df["rej amt"],
+    mode="lines",
+    line=dict(width=17, color="rgba(252,125,27,0.13)", shape="spline"),
+    hoverinfo="skip",
+    opacity=1,
+))
+
+fig_rej.update_layout(
+    margin=dict(t=24, b=40, l=10, r=10),
+    paper_bgcolor="rgba(0,0,0,0)",
+    plot_bgcolor="rgba(0,0,0,0)",
+    height=135,
+    showlegend=False,
+    xaxis=dict(showgrid=False, tickfont=dict(size=12), tickangle=-45, automargin=True),
+    yaxis=dict(showgrid=False, tickfont=dict(size=12), automargin=True),
+)
+
+sale_html = fig_sale.to_html(include_plotlyjs=False, full_html=False)
+rej_html = fig_rej.to_html(include_plotlyjs=False, full_html=False)
+
+bg_b64 = load_image_base64(IMAGE_PATH)
+
+# ---------- TOP VALUES FOR CARDS ---------- #
+
+top_date = latest[date_col].strftime("%d-%b-%Y")
+top_today_sale = format_inr(today_sale)
+top_oee = f"{round(oee if pd.notna(oee) else 0, 1)}%"
+
+left_rej_amt = format_inr(rej_day_amount)
+left_rej_pct = f"{rej_pct:.1f}%"
+bottom_rej_cum = format_inr(rej_cum)
+
+cumulative_sale_fmt = format_inr(total_cum)
+indent_fmt = format_inr(indent_value)
+
+# ---------- INDENT vs ACTUAL COMPARISON MINI-CHART ---------- #
+
+compare_fig = go.Figure()
+compare_fig.add_trace(go.Bar(
+    x=["Indent", "Actual"],
+    y=[indent_value, total_cum],
+    marker_color=["#228be6", "#fc7d1b"],
+    marker_line_width=0,
+    opacity=0.96
+))
+
+compare_fig.update_layout(
+    margin=dict(t=10, b=0, l=0, r=0),
+    paper_bgcolor="rgba(0,0,0,0)",
+    plot_bgcolor="rgba(0,0,0,0)",
+    height=110,
+    xaxis=dict(showgrid=False, tickfont=dict(size=12)),
+    yaxis=dict(showgrid=False, tickfont=dict(size=12)),
+)
+
+compare_html = compare_fig.to_html(include_plotlyjs=False, full_html=False)
+
+# ---------- CSS WITHOUT SNOW EFFECT ---------- #
+
+st.markdown(
+    f"""
+    <style>
+    body, .stApp {{
+        background: url("data:image/jpeg;base64,{bg_b64}") no-repeat center center fixed !important;
+        background-size: cover !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        overflow: hidden !important;
+    }}
+
+    .block-container {{
+        padding: 0 !important;
+        margin: 0 !important;
+    }}
+
+    .container {{
+        width: 100%;
+        height: 100%;
+        padding: 5vw;
+        box-sizing: border-box;
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        grid-template-rows: 130px 220px 140px 200px;  /* new row larger for Indent/Actual chart */
+        gap: 20px;
+        max-width: 1700px;
+        max-height: 900px;
+        margin: auto;
+    }}
+
+    .card {{
+        background: linear-gradient(184deg,rgba(255,255,255,0.13) 12%,rgba(255,255,255,0.04) 83%);
+        border-radius: 16px;
+        border: 1px solid rgba(255,255,255,0.08);
+        backdrop-filter: blur(6px) saturate(120%);
+        -webkit-backdrop-filter: blur(6px);
+        box-shadow: 0 6px 18px rgba(4, 8, 15, 0.13);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        overflow: hidden;
+        position: relative;
+    }}
+
+    .value-blue, .value-orange, .value-green {{
+        font-size: 54px;
+        font-family: 'Poppins', sans-serif;
+        font-weight: 900;
+        text-align: center;
+        background-clip: text !important;
+        -webkit-background-clip: text !important;
+        -webkit-text-fill-color: transparent !important;
+        margin: 0 auto;
+        padding: 4px 10px;
+        width: 100%;
+    }}
+
+    .value-blue {{
+        background-image:linear-gradient(89deg,#b9e6ff 0%,#228be6 75%,#79cafc 100%);
+        -webkit-text-stroke:1.3px #1661a2;
+    }}
+
+    .value-orange {{
+        background-image:linear-gradient(90deg,#ffd98a,#fc7d1b,#ffc473);
+        -webkit-text-stroke:1.3px #b96000;
+    }}
+
+    .value-green {{
+        background-image:linear-gradient(90deg,#aef9e2,#00df6c,#50e2ad);
+        -webkit-text-stroke:1.3px #1a8d56;
+        font-size: 46px;
+    }}
+
+    .title-black {{
+        color: #fff;
+        font-weight: 800;
+        font-size: 17px;
+        text-align: center;
+        margin-top: 6px;
+    }}
+
+    .chart-title-black {{
+        color: #fff;
+        font-size: 17px;
+        font-weight: 800;
+        width: 100%;
+        text-align: left;
+        margin-left: 8px;
+        margin-bottom: 4px;
+    }}
+
+    .chart-container {{
+        width: 100%;
+        height: 110px;
+        overflow: hidden;
+    }}
+
+    .compare-container {{
+        width: 100%;
+        height: 140px;
+        margin-top: -10px;
+    }}
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+# ---------- HTML TEMPLATE START ---------- #
+
+html_template = f"""
+<!doctype html>
+<html>
+<head><meta charset="utf-8"></head>
+<body>
+<div class="container">
+
+    <!-- ==================== TOP ROW ==================== -->
+
+    <div class="card">
+        <div class="value-blue">₹ {top_today_sale}</div>
+        <div class="title-black">Yesterday's Sale</div>
+    </div>
+
+    <div class="card">
+        <div class="value-orange">₹ {left_rej_amt}</div>
+        <div class="title-black">Rejection Amount</div>
+    </div>
+
+    <div class="card">
+        <div class="value-blue">{top_oee}</div>
+        <div class="title-black">OEE %</div>
+    </div>
+
+    <!-- ==================== SECOND ROW ==================== -->
+
+    <div class="card">{gauge_html}</div>
+
+    <div class="card">
+        <div class="value-green">{left_rej_pct}</div>
+        <div class="title-black">Rejection %</div>
+    </div>
+
+    <div class="card">
+        <div class="value-blue" style="font-size:40px;">COPQ Updating...</div>
+    </div>
+
+    <!-- ==================== THIRD ROW ==================== -->
+
+    <div class="card">
+        <div class="chart-title-black">Sale Trend</div>
+        <div class="chart-container">{sale_html}</div>
+    </div>
+
+    <div class="card">
+        <div class="chart-title-black">Rejection Trend</div>
+        <div class="chart-container">{rej_html}</div>
+    </div>
+
+    <div class="card">
+        <div class="value-orange">₹ {bottom_rej_cum}</div>
+        <div class="title-black">Rejection (Cumulative)</div>
+    </div>
+<!-- ==================== FOURTH ROW ==================== -->
+
+    <!-- Sale Cumulative -->
+    <div class="card">
+        <div class="value-blue" id="cumsalevalue">₹ {cumulative_sale_fmt}</div>
+        <div class="title-black">Sale Cumulative</div>
+    </div>
+
+    <!-- Indent vs Actual -->
+    <div class="card">
+        <div class="chart-title-black">Indent vs Actual</div>
+        <div class="compare-container">
+            {compare_html}
+        </div>
+        <div style="display:flex; width:100%; justify-content:space-around; margin-top:4px;">
+            <div style="text-align:center;">
+                <div class="title-black" style="font-size:15px;">Indent</div>
+                <div class="value-blue" id="indentvalue" style="font-size:32px;">₹ {indent_fmt}</div>
+            </div>
+            <div style="text-align:center;">
+                <div class="title-black" style="font-size:15px;">Actual</div>
+                <div class="value-orange" id="actualvalue" style="font-size:32px;">₹ {cumulative_sale_fmt}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Empty / Spacer Card -->
+    <div class="card">
+        <div class="value-blue" style="font-size:32px; opacity:0.0;">&nbsp;</div>
+    </div>
+
+</div>
+
+<script>
+function animateValue(element, start, end, duration, suffix="", prefix="") {{
+    if (isNaN(Number(end))) {{
+        element.textContent = prefix + end + suffix;
+        return;
+    }}
+    const range = end - start;
+    let startTime = null;
+    function step(now) {{
+        if (!startTime) startTime = now;
+        let progress = Math.min((now - startTime) / duration, 1);
+        let value = Math.floor(start + range * progress);
+        element.textContent = prefix + value.toLocaleString('en-IN') + suffix;
+        if (progress < 1) requestAnimationFrame(step);
+        else element.textContent = prefix + Number(end).toLocaleString('en-IN') + suffix;
+    }}
+    requestAnimationFrame(step);
+}}
+
+window.addEventListener("DOMContentLoaded", function() {{
+    animateValue(
+        document.getElementById('salevalue'),
+        0,
+        parseInt("{top_today_sale.replace(',', '')}"),
+        1100,
+        "",
+        "₹ "
+    );
+
+    animateValue(
+        document.getElementById('oeevalue'),
+        0,
+        parseFloat("{top_oee.replace('%', '')}"),
+        1100,
+        "%"
+    );
+
+    animateValue(
+        document.getElementById('rejamtvalue'),
+        0,
+        parseInt("{left_rej_amt.replace(',', '')}"),
+        1100,
+        "",
+        "₹ "
+    );
+
+    animateValue(
+        document.getElementById('rejpctvalue'),
+        0,
+        parseFloat("{left_rej_pct.replace('%', '')}"),
+        1100,
+        "%"
+    );
+
+    animateValue(
+        document.getElementById('rejcum'),
+        0,
+        parseInt("{bottom_rej_cum.replace(',', '')}"),
+        1100,
+        "",
+        "₹ "
+    );
+
+    animateValue(
+        document.getElementById('cumsalevalue'),
+        0,
+        parseInt("{cumulative_sale_fmt.replace(',', '')}"),
+        1100,
+        "",
+        "₹ "
+    );
+
+    animateValue(
+        document.getElementById('indentvalue'),
+        0,
+        parseInt("{indent_fmt.replace(',', '')}"),
+        1100,
+        "",
+        "₹ "
+    );
+
+    animateValue(
+        document.getElementById('actualvalue'),
+        0,
+        parseInt("{cumulative_sale_fmt.replace(',', '')}"),
+        1100,
+        "",
+        "₹ "
+    );
+}});
+</script>
+
+</body>
+</html>
+"""
+
+# ---------- RENDER HTML IN STREAMLIT ---------- #
+
+st.components.v1.html(html_template, height=900, scrolling=True)
+    
 # import streamlit as st
 # import pandas as pd
 # import plotly.graph_objects as go
@@ -1345,6 +1988,7 @@
 # # """
 
 # # st.components.v1.html(html_template, height=770, scrolling=True)
+
 
 
 
