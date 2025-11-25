@@ -574,68 +574,11 @@ body {{
 
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 
-<script>
 
-function animateValue(element, start, end, duration, suffix="", prefix="") {
-    if (isNaN(Number(end))) {
-        element.textContent = prefix + end + suffix;
-        return;
-    }
-    const range = end - start;
-    let startTime = null;
-
-    function step(now) {
-        if (!startTime) startTime = now;
-        let progress = Math.min((now - startTime) / duration, 1);
-        let value = Math.floor(start + range * progress);
-        element.textContent = prefix + value.toLocaleString('en-IN') + suffix;
-
-        if (progress < 1) requestAnimationFrame(step);
-        else element.textContent = prefix + Number(end).toLocaleString('en-IN') + suffix;
-    }
-    requestAnimationFrame(step);
-}
-
-window.addEventListener("DOMContentLoaded", function () {
-
-    animateValue(
-        document.getElementById('salevalue'),
-        0, parseInt("{top_today_sale.replace(',', '')}"),
-        1100, "", "₹ "
-    );
-
-    animateValue(
-        document.getElementById('oeevalue'),
-        0, parseFloat("{top_oee.replace('%', '')}"),
-        1100, "%"
-    );
-
-    animateValue(
-        document.getElementById('rejval'),
-        0, parseFloat("{left_rej_pct.replace('%','').strip()}"),
-        1100, "%"
-    );
-
-    animateValue(
-        document.getElementById('rejcum'),
-        0, parseInt("{bottom_rej_cum.replace(',', '')}"),
-        1100, "", "₹ "
-    );
-
-    animateValue(
-        document.getElementById('achval'),
-        0, parseFloat("{achieved_pct_val}"),
-        1100, "%"
-    );
-
-});
-</script>
-
-</body>
-</html>
 """
 
 st.components.v1.html(html_template, height=770, scrolling=True)
+
 
 
 
