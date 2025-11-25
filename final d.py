@@ -489,12 +489,7 @@ body {{
       </div>
     </div>
 
-    <div class="card top-card">
-      <canvas class="snow-bg" id="snowcopq"></canvas>
-      <div class="center-content">
-        <div class="value-blue" style="font-size:40px!important;">COPQ Updating...</div>
-      </div>
-    </div>
+    
     
     <div class="card">
       <canvas class="snow-bg" id="snowspeed"></canvas>
@@ -509,7 +504,12 @@ body {{
       </div>
     </div>
     
-    
+    <div class="card top-card">
+      <canvas class="snow-bg" id="snowcopq"></canvas>
+      <div class="center-content">
+        <div class="value-blue" style="font-size:40px!important;">COPQ Updating...</div>
+      </div>
+    </div>
 
     <div class="card bottom-card">
         <canvas class="snow-bg" id="snowsalechart"></canvas>
@@ -859,6 +859,7 @@ st.components.v1.html(html_template, height=770, scrolling=True)
 # """
 
 # st.components.v1.html(html_template, height=1100, scrolling=False)
+
 
 
 
