@@ -555,7 +555,7 @@ body {{
     <div class="card">
       <canvas class="snow-bg" id="snowach"></canvas>
       <div class="center-content">
-        <div class="value-green" id="rejpctvalue">{left_rej_pct}</div>
+        <div class="value-orange" id="rejpctvalue">{left_rej_pct}</div>
         <div class="title-black">Rejection %</div>
       </div>
     </div>
@@ -1345,6 +1345,7 @@ st.components.v1.html(html_template, height=900, scrolling=True)
 # """
 
 # st.components.v1.html(html_template, height=770, scrolling=True)
+
 
 
 
