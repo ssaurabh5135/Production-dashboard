@@ -300,287 +300,6 @@ top_oee = f"{round(oee if pd.notna(oee) else 0, 1)}%"
 left_rej_pct = f"{rej_pct: .1f}%"
 bottom_rej_cum = format_inr(rej_cum)
 
-# html_template = f"""
-# <!doctype html>
-# <html>
-# <head>
-# <meta charset="utf-8">
-# <style>
-# :root {{
-#     --card-radius: 17px;
-#     --orange: {BUTTERFLY_ORANGE};
-#     --blue: {BLUE};
-#     --green: {GREEN};
-# }}
-# body {{
-#     margin:0;
-#     padding:0;
-#     font-family:'Poppins',sans-serif;
-#     background: none !important;
-#     color:#091128;
-# }}
-# .container {{
-#     box-sizing: border-box;
-#     width: 100vw;
-#     height: 100vh;
-#     padding: 5vw;
-#     display: grid;
-#     grid-template-columns: 1fr 1fr 1fr;
-#     grid-template-rows: 130px 220px 140px;
-#     gap: 18px;
-#     row-gap: 30px;
-#     max-width: 1700px;
-#     max-height: 900px;
-#     margin: auto;
-# }}
-
-# /* ⭐ FIXED BOX STYLE — EXACT SAME AS VS CODE */
-# .card {{
-#     background: linear-gradient(184deg,rgba(255,255,255,0.13) 12%,rgba(255,255,255,0.04) 83%);
-#     border-radius: 16px;
-#     box-shadow: 0 6px 18px rgba(4, 8, 15, 0.13);
-#     border: 1px solid rgba(255,255,255,0.08);
-#     backdrop-filter: blur(6px) saturate(120%);
-#     -webkit-backdrop-filter: blur(6px);
-#     display: flex;
-#     flex-direction: column;
-#     align-items: center;
-#     justify-content: center;
-#     position: relative;
-#     overflow: hidden;
-# }}
-
-# .snow-bg {{
-#     pointer-events:none; 
-#     position:absolute; 
-#     left:0; top:0; 
-#     width:100%; height:100%; 
-#     z-index:0; 
-#     opacity:0.50;
-# }}
-# .value-orange, .value-blue {{
-#     font-size:54px!important; 
-#     font-family:'Poppins','Segoe UI',Arial,sans-serif;
-#     font-weight:900!important; 
-#     letter-spacing:0.03em; 
-#     text-align:center; 
-#     position:relative; 
-#     z-index:2;
-#     background-clip:text!important; 
-#     -webkit-background-clip:text!important; 
-#     -webkit-text-fill-color:transparent; 
-#     color:transparent!important;
-#     padding:4px 11px; 
-#     margin:0 auto; 
-#     white-space:nowrap; 
-#     width:100%;
-# }}
-# .value-orange {{
-#     background-image:linear-gradient(90deg,#ffd98a 0%,#fc7d1b 58%,#ffc473 100%);
-#     text-shadow:0 2px 0 #fff, 0 6px 16px #fc7d1b,
-#                  0 1px 8px #fffbe8, 0 12px 38px #fc7d1b;
-#     -webkit-text-stroke:1.2px #b96000;
-#     filter:drop-shadow(0 4px 18px #fc7d1b);
-#     border-radius:10px; 
-#     animation:popval 1.18s cubic-bezier(0.14,0.86,0.29,1.08) both,
-#               shimmer 3.2s linear infinite;
-#     background-size:200% 100%;
-# }}
-# .value-blue {{
-#     background-image:linear-gradient(89deg,#b9e6ff 0%,#228be6 75%,#79cafc 100%);
-#     text-shadow:0 2px 0 #fff, 0 0.5px 9px #79cafc,
-#                  0 6px 18px #228be6, 0 12px 38px #79cafc;
-#     -webkit-text-stroke:1.2px #1661a2;
-#     filter:drop-shadow(0 4px 18px #228be6);
-#     border-radius:10px;
-#     animation:popval 1.1s cubic-bezier(0.14,0.86,0.29,1.08) both,
-#               shimmer 3.2s linear infinite;
-#     background-size:200% 100%;
-# }}
-# .value-green {{
-#     font-size:56px!important;
-#     font-weight:900!important;
-#     font-family:'Poppins','Segoe UI',Arial,sans-serif;
-#     background:linear-gradient(90deg,#aef9e2 0%,#00df6c 60%,#50e2ad 100%);
-#     -webkit-background-clip:text!important;
-#     background-clip:text!important;
-#     -webkit-text-fill-color:transparent;
-#     color:transparent!important;
-#     text-shadow:0 3px 8px #fffbe8,
-#                  0 5px 16px #00df6c,
-#                  0 10px 30px #aef9e2;
-#     -webkit-text-stroke:1.2px #1a8d56;
-#     filter:drop-shadow(0 4px 16px #00df6c);
-#     border-radius:10px;
-#     animation:popval 1.1s cubic-bezier(.14,.86,.29,1.08) both,
-#               shimmer 3.4s linear infinite;
-#     background-size:200% 100%;
-#     text-align:center;
-#     margin-bottom:4px;
-# }}
-# @keyframes popval {{
-#   0%{{opacity:0;transform:translateY(14px) scale(.93);}}
-#   55%{{opacity:1;transform:translateY(-3px)scale(1.10);}}
-#   85%{{transform:translateY(1px)scale(1.04);}}
-#   100%{{opacity:1;transform:translateY(0)scale(1);}}
-# }}
-# @keyframes shimmer {{
-#     0%{{background-position:-200% center;}}
-#     100%{{background-position:200% center;}}
-# }}
-# .title-green {{
-#     color:{GREEN}!important; 
-#     font-size:26px!important; 
-#     font-weight:750!important; 
-#     margin-top:4px!important;
-# }}
-# .title-black {{
-#     color:#191921!important; 
-#     font-size:17px!important; 
-#     font-weight:800!important; 
-#     margin-top:7px!important; 
-#     width:100%;text-align:center!important;
-# }}
-# .chart-title-black {{
-#     color: #003!important; 
-#     font-size:16px!important; 
-#     font-weight:700!important; 
-#     margin-bottom:3px!important; 
-#     width:100%; text-align:left!important; 
-#     padding-left:7px;
-# }}
-# .chart-container {{
-#     width:100%; height:110px; 
-#     overflow:hidden; 
-#     box-sizing:border-box;
-#     margin:0; padding:0; 
-#     display:block;
-# }}
-# .center-content {{
-#     width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0;margin:0;
-# }}
-# </style>
-# </head>
-# <body>
-# <div class="container">
-
-#     <div class="card top-card">
-#       <canvas class="snow-bg" id="snowdate"></canvas>
-#       <div class="center-content">
-#         <div class="value-orange oneline" id="datevalue">{top_date}</div>
-#         <div class="title-black">Date</div>
-#       </div>
-#     </div>
-#     <div class="card top-card">
-#       <canvas class="snow-bg" id="snowsale"></canvas>
-#       <div class="center-content">
-#         <div class="value-blue" id="salevalue">₹ {top_today_sale}</div>
-#         <div class="title-black">Today's Sale</div>
-#       </div>
-#     </div>
-#     <div class="card top-card">
-#       <canvas class="snow-bg" id="snowoee"></canvas>
-#       <div class="center-content">
-#         <div class="value-orange" id="oeevalue">{top_oee}</div>
-#         <div class="title-black">OEE %</div>
-#       </div>
-#     </div>
-#     <div class="card">
-#       <canvas class="snow-bg" id="snowrej"></canvas>
-#       <div class="center-content">
-#         <div class="value-orange" id="rejval">{left_rej_pct}</div>
-#         <div class="title-black">Rejection %</div>
-#       </div>
-#     </div>
-#     <div class="card">
-#       <canvas class="snow-bg" id="snowach"></canvas>
-#       <div class="center-content">
-#         <div class="value-green" id="achval">{achieved_pct_val}%</div>
-#         <div class="title-green">Achieved %</div>
-#       </div>
-#     </div>
-#     <div class="card">
-#       <canvas class="snow-bg" id="snowspeed"></canvas>
-#       {gauge_html}
-#     </div>
-#     <div class="card bottom-card">
-#       <canvas class="snow-bg" id="snowrejcum"></canvas>
-#       <div class="center-content">
-#         <div class="value-orange" id="rejcum">{bottom_rej_cum}</div>
-#         <div class="title-black">Rejection (Cumulative)</div>
-#       </div>
-#     </div>
-#     <div class="card bottom-card">
-#         <canvas class="snow-bg" id="snowsalechart"></canvas>
-#         <div class="chart-title-black">Sale Trend</div>
-#         <div id="sale_chart_container" class="chart-container">{sale_html}</div>
-#     </div>
-#     <div class="card bottom-card">
-#         <canvas class="snow-bg" id="snowrejchart"></canvas>
-#         <div class="chart-title-black">Rejection Trend</div>
-#         <div id="rej_chart_container" class="chart-container">{rej_html}</div>
-#     </div>
-# </div>
-# <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-# <script>
-# function makeSnow(canvas) {{
-#     if (!canvas) return;
-#     var ctx = canvas.getContext('2d');
-#     var w = canvas.width = canvas.offsetWidth, h = canvas.height = canvas.offsetHeight;
-#     var sn = [];
-#     for(var i=0;i<36;i++) sn.push({{x:Math.random()*w,y:Math.random()*h,r:1.4+Math.random()*2,dx:0,dy:1+Math.random()*1.6}});
-#     function loop(){{
-#         ctx.clearRect(0,0,w,h);
-#         for(var i=0;i<sn.length;i++) {{
-#             ctx.beginPath();
-#             ctx.arc(sn[i].x,sn[i].y,sn[i].r,0,2*Math.PI);
-#             ctx.fillStyle="rgba(255,255,255,0.65)";
-#             ctx.fill();
-#             sn[i].x += sn[i].dx*(0.4+Math.random()*0.7);
-#             sn[i].y += sn[i].dy;
-#             if(sn[i].y>h){{ sn[i].y=0; sn[i].x=Math.random()*w; }}
-#             if(sn[i].x>w){{ sn[i].x=0; }}
-#         }}
-#         requestAnimationFrame(loop);
-#     }}
-#     loop();
-# }}
-# window.addEventListener("DOMContentLoaded",function() {{
-#     [
-#       "snowdate","snowsale","snowoee","snowrej","snowach","snowrejcum",
-#       "snowspeed","snowsalechart","snowrejchart"
-#     ].forEach(function(id){{ var el=document.getElementById(id); if(el) setTimeout(function(){{makeSnow(el)}},120); }});
-# }});
-# function animateValue(element, start, end, duration, suffix="", prefix="") {{
-#     if(isNaN(Number(end))) {{ element.textContent = prefix + end + suffix; return; }}
-#     const range = end - start;
-#     let startTime = null;
-#     function step(now) {{
-#         if (!startTime) startTime = now;
-#         let progress = Math.min((now - startTime) / duration, 1);
-#         let value = Math.floor(start + range * progress);
-#         element.textContent = prefix + value.toLocaleString('en-IN') + suffix;
-#         if (progress < 1) requestAnimationFrame(step);
-#         else element.textContent = prefix + Number(end).toLocaleString('en-IN') + suffix;
-#     }}
-#     requestAnimationFrame(step);
-# }}
-# window.addEventListener("DOMContentLoaded", function() {{
-#     animateValue(document.getElementById('salevalue'), 0, parseInt("{top_today_sale.replace(',', '')}"), 1100, "", "₹ ");
-#     animateValue(document.getElementById('oeevalue'), 0, parseFloat("{top_oee.replace('%', '')}"), 1100, "%");
-#     animateValue(document.getElementById('rejval'), 0, parseFloat("{left_rej_pct.replace('%', '').strip()}"), 1100, "%");
-#     animateValue(document.getElementById('rejcum'), 0, parseInt("{bottom_rej_cum.replace(',', '')}"), 1100, "", "₹ ");
-#     animateValue(document.getElementById('achval'), 0, parseFloat("{achieved_pct_val}"), 1100, "%");
-# }});
-# </script>
-# </body>
-# </html>
-# """
-
-# st.components.v1.html(html_template, height=770, scrolling=True)
-
-# ---------------- HTML TEMPLATE ----------------
-
 html_template = f"""
 <!doctype html>
 <html>
@@ -588,32 +307,23 @@ html_template = f"""
 <meta charset="utf-8">
 <style>
 :root {{
-    --card-radius: 16px;
+    --card-radius: 17px;
     --orange: {BUTTERFLY_ORANGE};
     --blue: {BLUE};
     --green: {GREEN};
 }}
-html, body, #root {{
-    width: 100vw;
-    height: 100vh;
-    min-width: 100vw;
-    min-height: 100vh;
-    overflow: hidden;
-}}
 body {{
-    margin: 0;
-    padding: 0;
-    width: 100vw;
-    height: 100vh;
-    font-family: 'Poppins', sans-serif;
-    background: none!important; /* global background set by Streamlit markdown block */
-    color: #071024;
+    margin:0;
+    padding:0;
+    font-family:'Poppins',sans-serif;
+    background: none !important;
+    color:#091128;
 }}
 .container {{
     box-sizing: border-box;
     width: 100vw;
     height: 100vh;
-    padding: 6vw;
+    padding: 5vw;
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     grid-template-rows: 130px 220px 140px;
@@ -623,9 +333,11 @@ body {{
     max-height: 900px;
     margin: auto;
 }}
+
+/* ⭐ FIXED BOX STYLE — EXACT SAME AS VS CODE */
 .card {{
     background: linear-gradient(184deg,rgba(255,255,255,0.13) 12%,rgba(255,255,255,0.04) 83%);
-    border-radius: var(--card-radius);
+    border-radius: 16px;
     box-shadow: 0 6px 18px rgba(4, 8, 15, 0.13);
     border: 1px solid rgba(255,255,255,0.08);
     backdrop-filter: blur(6px) saturate(120%);
@@ -637,56 +349,74 @@ body {{
     position: relative;
     overflow: hidden;
 }}
+
 .snow-bg {{
-    pointer-events: none;
-    position: absolute;
-    left: 0; top: 0;
-    width: 100%; height: 100%;
-    z-index: 0;
-    opacity: 0.42;
-}}
-.center-content {{
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    height: 100%;
-    text-align: center;
-    background: none !important;
-    box-shadow: none !important;
-    border: none !important;
+    pointer-events:none; 
+    position:absolute; 
+    left:0; top:0; 
+    width:100%; height:100%; 
+    z-index:0; 
+    opacity:0.50;
 }}
 .value-orange, .value-blue {{
-    font-size:54px!important; font-family:'Poppins','Segoe UI',Arial,sans-serif;
-    font-weight:900!important; letter-spacing:0.04em; text-align:center; position:relative; z-index:2;
-    background-clip:text!important; -webkit-background-clip:text!important; -webkit-text-fill-color:transparent; color:transparent!important;
-    padding:4px 11px; margin:0 auto; white-space:nowrap; width: 100%;
+    font-size:54px!important; 
+    font-family:'Poppins','Segoe UI',Arial,sans-serif;
+    font-weight:900!important; 
+    letter-spacing:0.03em; 
+    text-align:center; 
+    position:relative; 
+    z-index:2;
+    background-clip:text!important; 
+    -webkit-background-clip:text!important; 
+    -webkit-text-fill-color:transparent; 
+    color:transparent!important;
+    padding:4px 11px; 
+    margin:0 auto; 
+    white-space:nowrap; 
+    width:100%;
 }}
 .value-orange {{
     background-image:linear-gradient(90deg,#ffd98a 0%,#fc7d1b 58%,#ffc473 100%);
-    text-shadow:0 2px 0 #fff, 0 6px 16px #fc7d1b, 0 1px 8px #fffbe8, 0 12px 38px #fc7d1b;
+    text-shadow:0 2px 0 #fff, 0 6px 16px #fc7d1b,
+                 0 1px 8px #fffbe8, 0 12px 38px #fc7d1b;
     -webkit-text-stroke:1.2px #b96000;
     filter:drop-shadow(0 4px 18px #fc7d1b);
-    border-radius:10px;
-    animation:popval 1.13s cubic-bezier(0.14,0.86,0.29,1.08) both, shimmer 3.2s linear infinite;
+    border-radius:10px; 
+    animation:popval 1.18s cubic-bezier(0.14,0.86,0.29,1.08) both,
+              shimmer 3.2s linear infinite;
     background-size:200% 100%;
 }}
 .value-blue {{
     background-image:linear-gradient(89deg,#b9e6ff 0%,#228be6 75%,#79cafc 100%);
-    text-shadow:0 2px 0 #fff, 0 0.5px 9px #79cafc, 0 6px 18px #228be6, 0 12px 38px #79cafc;
+    text-shadow:0 2px 0 #fff, 0 0.5px 9px #79cafc,
+                 0 6px 18px #228be6, 0 12px 38px #79cafc;
     -webkit-text-stroke:1.2px #1661a2;
     filter:drop-shadow(0 4px 18px #228be6);
     border-radius:10px;
-    animation:popval 1.1s cubic-bezier(0.14,0.86,0.29,1.08) both, shimmer 3.2s linear infinite;
+    animation:popval 1.1s cubic-bezier(0.14,0.86,0.29,1.08) both,
+              shimmer 3.2s linear infinite;
     background-size:200% 100%;
 }}
 .value-green {{
-    font-size:56px!important;font-weight:900!important;font-family:'Poppins','Segoe UI',Arial,sans-serif;
+    font-size:56px!important;
+    font-weight:900!important;
+    font-family:'Poppins','Segoe UI',Arial,sans-serif;
     background:linear-gradient(90deg,#aef9e2 0%,#00df6c 60%,#50e2ad 100%);
-    -webkit-background-clip:text!important;background-clip:text!important;-webkit-text-fill-color:transparent; color:transparent!important;
-    text-shadow:0 3px 8px #fffbe8,0 5px 16px #00df6c,0 10px 30px #aef9e2; -webkit-text-stroke:1.2px #1a8d56;
-    filter:drop-shadow(0 4px 16px #00df6c);border-radius:10px;box-shadow:0 1.5px 14px #8cffca; animation:popval 1.1s cubic-bezier(.14,.86,.29,1.08) both, shimmer 3.4s linear infinite;
-    background-size:200% 100%;text-align:center;margin-bottom:4px;
+    -webkit-background-clip:text!important;
+    background-clip:text!important;
+    -webkit-text-fill-color:transparent;
+    color:transparent!important;
+    text-shadow:0 3px 8px #fffbe8,
+                 0 5px 16px #00df6c,
+                 0 10px 30px #aef9e2;
+    -webkit-text-stroke:1.2px #1a8d56;
+    filter:drop-shadow(0 4px 16px #00df6c);
+    border-radius:10px;
+    animation:popval 1.1s cubic-bezier(.14,.86,.29,1.08) both,
+              shimmer 3.4s linear infinite;
+    background-size:200% 100%;
+    text-align:center;
+    margin-bottom:4px;
 }}
 @keyframes popval {{
   0%{{opacity:0;transform:translateY(14px) scale(.93);}}
@@ -699,95 +429,97 @@ body {{
     100%{{background-position:200% center;}}
 }}
 .title-green {{
-    color:{GREEN}!important; font-size:26px!important; font-weight:750!important; margin-top:4px!important;
+    color:{GREEN}!important; 
+    font-size:26px!important; 
+    font-weight:750!important; 
+    margin-top:4px!important;
 }}
 .title-black {{
-    color:#f7f5fa!important; font-size:17px!important; font-weight:800!important; margin-top:7px!important; width:100%;text-align:center!important;
+    color:#191921!important; 
+    font-size:17px!important; 
+    font-weight:800!important; 
+    margin-top:7px!important; 
+    width:100%;text-align:center!important;
 }}
 .chart-title-black {{
-    color: #918b99!important; font-size:16px!important; font-weight:700!important; margin-bottom:3px!important; width:100%; text-align:left!important; padding-left:7px;
+    color: #003!important; 
+    font-size:16px!important; 
+    font-weight:700!important; 
+    margin-bottom:3px!important; 
+    width:100%; text-align:left!important; 
+    padding-left:7px;
 }}
 .chart-container {{
-    width:100%; height:110px; max-width:100%; overflow:hidden; box-sizing:border-box; margin:0; padding:0; display:block;
+    width:100%; height:110px; 
+    overflow:hidden; 
+    box-sizing:border-box;
+    margin:0; padding:0; 
+    display:block;
 }}
-@media (max-width:1100px){{.container{{grid-template-columns:1fr;grid-template-rows:auto;}}}}
+.center-content {{
+    width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0;margin:0;
+}}
 </style>
 </head>
 <body>
 <div class="container">
 
-    <!-- COLUMN 1 (vertical): Today's Sale, Gauge, Sale Trend -->
-
-    <div class="card top-card" style="grid-column:1; grid-row:1;">
+    <div class="card top-card">
+      <canvas class="snow-bg" id="snowdate"></canvas>
+      <div class="center-content">
+        <div class="value-orange oneline" id="datevalue">{top_date}</div>
+        <div class="title-black">Date</div>
+      </div>
+    </div>
+    <div class="card top-card">
       <canvas class="snow-bg" id="snowsale"></canvas>
       <div class="center-content">
         <div class="value-blue" id="salevalue">₹ {top_today_sale}</div>
         <div class="title-black">Today's Sale</div>
       </div>
     </div>
-
-    <div class="card" style="grid-column:1; grid-row:2;">
-      <canvas class="snow-bg" id="snowspeed"></canvas>
-      {gauge_html}
-    </div>
-
-    <div class="card bottom-card" style="grid-column:1; grid-row:3;">
-        <canvas class="snow-bg" id="snowsalechart"></canvas>
-        <div class="chart-title-black">Sale Trend</div>
-        <div id="sale_chart_container" class="chart-container">{sale_html}</div>
-    </div>
-
-
-    <!-- COLUMN 2 (vertical): Rejection Amount, %, Trend -->
-
-    <div class="card top-card" style="grid-column:2; grid-row:1;">
-      <canvas class="snow-bg" id="snowrejamt"></canvas>
+    <div class="card top-card">
+      <canvas class="snow-bg" id="snowoee"></canvas>
       <div class="center-content">
-        <div class="value-orange">₹ {rej_day_formatted}</div>
-        <div class="title-black">Rejection Amount</div>
+        <div class="value-orange" id="oeevalue">{top_oee}</div>
+        <div class="title-black">OEE %</div>
       </div>
     </div>
-
-    <div class="card" style="grid-column:2; grid-row:2;">
+    <div class="card">
       <canvas class="snow-bg" id="snowrej"></canvas>
       <div class="center-content">
         <div class="value-orange" id="rejval">{left_rej_pct}</div>
         <div class="title-black">Rejection %</div>
       </div>
     </div>
-
-    <div class="card bottom-card" style="grid-column:2; grid-row:3;">
-        <canvas class="snow-bg" id="snowrejchart"></canvas>
-        <div class="chart-title-black">Rejection Trend</div>
-        <div id="rej_chart_container" class="chart-container">{rej_html}</div>
-    </div>
-
-
-    <!-- COLUMN 3 (vertical): Date (small), COPQ, Rejection Cumulative -->
-
-    <div class="card top-card" style="grid-column:3; grid-row:1;">
-      <canvas class="snow-bg" id="snowdate"></canvas>
+    <div class="card">
+      <canvas class="snow-bg" id="snowach"></canvas>
       <div class="center-content">
-        <div class="value-blue" id="datevalue" style="font-size:32px!important;">{top_date}</div>
-        <div class="title-black">Date</div>
+        <div class="value-green" id="achval">{achieved_pct_val}%</div>
+        <div class="title-green">Achieved %</div>
       </div>
     </div>
-
-    <div class="card" style="grid-column:3; grid-row:2;">
-      <canvas class="snow-bg" id="snowcopq"></canvas>
-      <div class="center-content">
-        <div class="value-blue" style="font-size:40px!important;">COPQ Updating...</div>
-      </div>
+    <div class="card">
+      <canvas class="snow-bg" id="snowspeed"></canvas>
+      {gauge_html}
     </div>
-
-    <div class="card bottom-card" style="grid-column:3; grid-row:3;">
+    <div class="card bottom-card">
       <canvas class="snow-bg" id="snowrejcum"></canvas>
       <div class="center-content">
         <div class="value-orange" id="rejcum">{bottom_rej_cum}</div>
         <div class="title-black">Rejection (Cumulative)</div>
       </div>
     </div>
-
+    <div class="card bottom-card">
+        <canvas class="snow-bg" id="snowsalechart"></canvas>
+        <div class="chart-title-black">Sale Trend</div>
+        <div id="sale_chart_container" class="chart-container">{sale_html}</div>
+    </div>
+    <div class="card bottom-card">
+        <canvas class="snow-bg" id="snowrejchart"></canvas>
+        <div class="chart-title-black">Rejection Trend</div>
+        <div id="rej_chart_container" class="chart-container">{rej_html}</div>
+    </div>
 </div>
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 <script>
@@ -796,15 +528,15 @@ function makeSnow(canvas) {{
     var ctx = canvas.getContext('2d');
     var w = canvas.width = canvas.offsetWidth, h = canvas.height = canvas.offsetHeight;
     var sn = [];
-    for(var i=0;i<36;i++) sn.push({{x:Math.random()*w,y:Math.random()*h,r:1.2+Math.random()*2,dx:0,dy:1.3+Math.random()*1.5}});
+    for(var i=0;i<36;i++) sn.push({{x:Math.random()*w,y:Math.random()*h,r:1.4+Math.random()*2,dx:0,dy:1+Math.random()*1.6}});
     function loop(){{
         ctx.clearRect(0,0,w,h);
         for(var i=0;i<sn.length;i++) {{
             ctx.beginPath();
             ctx.arc(sn[i].x,sn[i].y,sn[i].r,0,2*Math.PI);
-            ctx.fillStyle="rgba(255,255,255,0.62)";
+            ctx.fillStyle="rgba(255,255,255,0.65)";
             ctx.fill();
-            sn[i].x += sn[i].dx*(0.46+Math.random()*0.7);
+            sn[i].x += sn[i].dx*(0.4+Math.random()*0.7);
             sn[i].y += sn[i].dy;
             if(sn[i].y>h){{ sn[i].y=0; sn[i].x=Math.random()*w; }}
             if(sn[i].x>w){{ sn[i].x=0; }}
@@ -815,13 +547,11 @@ function makeSnow(canvas) {{
 }}
 window.addEventListener("DOMContentLoaded",function() {{
     [
-      "snowdate","snowsale","snowrej","snowrejcum",
-      "snowspeed","snowsalechart","snowrejchart",
-      "snowrejamt","snowcopq"
+      "snowdate","snowsale","snowoee","snowrej","snowach","snowrejcum",
+      "snowspeed","snowsalechart","snowrejchart"
     ].forEach(function(id){{ var el=document.getElementById(id); if(el) setTimeout(function(){{makeSnow(el)}},120); }});
 }});
 function animateValue(element, start, end, duration, suffix="", prefix="") {{
-    if(!element) return;
     if(isNaN(Number(end))) {{ element.textContent = prefix + end + suffix; return; }}
     const range = end - start;
     let startTime = null;
@@ -847,7 +577,278 @@ window.addEventListener("DOMContentLoaded", function() {{
 </html>
 """
 
-st.components.v1.html(html_template, height=1100, scrolling=False)
+st.components.v1.html(html_template, height=770, scrolling=True)
+
+# # ---------------- HTML TEMPLATE ----------------
+
+# html_template = f"""
+# <!doctype html>
+# <html>
+# <head>
+# <meta charset="utf-8">
+# <style>
+# :root {{
+#     --card-radius: 16px;
+#     --orange: {BUTTERFLY_ORANGE};
+#     --blue: {BLUE};
+#     --green: {GREEN};
+# }}
+# html, body, #root {{
+#     width: 100vw;
+#     height: 100vh;
+#     min-width: 100vw;
+#     min-height: 100vh;
+#     overflow: hidden;
+# }}
+# body {{
+#     margin: 0;
+#     padding: 0;
+#     width: 100vw;
+#     height: 100vh;
+#     font-family: 'Poppins', sans-serif;
+#     background: none!important; /* global background set by Streamlit markdown block */
+#     color: #071024;
+# }}
+# .container {{
+#     box-sizing: border-box;
+#     width: 100vw;
+#     height: 100vh;
+#     padding: 6vw;
+#     display: grid;
+#     grid-template-columns: 1fr 1fr 1fr;
+#     grid-template-rows: 130px 220px 140px;
+#     gap: 18px;
+#     row-gap: 30px;
+#     max-width: 1700px;
+#     max-height: 900px;
+#     margin: auto;
+# }}
+# .card {{
+#     background: linear-gradient(184deg,rgba(255,255,255,0.13) 12%,rgba(255,255,255,0.04) 83%);
+#     border-radius: var(--card-radius);
+#     box-shadow: 0 6px 18px rgba(4, 8, 15, 0.13);
+#     border: 1px solid rgba(255,255,255,0.08);
+#     backdrop-filter: blur(6px) saturate(120%);
+#     -webkit-backdrop-filter: blur(6px);
+#     display: flex;
+#     flex-direction: column;
+#     align-items: center;
+#     justify-content: center;
+#     position: relative;
+#     overflow: hidden;
+# }}
+# .snow-bg {{
+#     pointer-events: none;
+#     position: absolute;
+#     left: 0; top: 0;
+#     width: 100%; height: 100%;
+#     z-index: 0;
+#     opacity: 0.42;
+# }}
+# .center-content {{
+#     display: flex;
+#     flex-direction: column;
+#     justify-content: center;
+#     align-items: center;
+#     height: 100%;
+#     text-align: center;
+#     background: none !important;
+#     box-shadow: none !important;
+#     border: none !important;
+# }}
+# .value-orange, .value-blue {{
+#     font-size:54px!important; font-family:'Poppins','Segoe UI',Arial,sans-serif;
+#     font-weight:900!important; letter-spacing:0.04em; text-align:center; position:relative; z-index:2;
+#     background-clip:text!important; -webkit-background-clip:text!important; -webkit-text-fill-color:transparent; color:transparent!important;
+#     padding:4px 11px; margin:0 auto; white-space:nowrap; width: 100%;
+# }}
+# .value-orange {{
+#     background-image:linear-gradient(90deg,#ffd98a 0%,#fc7d1b 58%,#ffc473 100%);
+#     text-shadow:0 2px 0 #fff, 0 6px 16px #fc7d1b, 0 1px 8px #fffbe8, 0 12px 38px #fc7d1b;
+#     -webkit-text-stroke:1.2px #b96000;
+#     filter:drop-shadow(0 4px 18px #fc7d1b);
+#     border-radius:10px;
+#     animation:popval 1.13s cubic-bezier(0.14,0.86,0.29,1.08) both, shimmer 3.2s linear infinite;
+#     background-size:200% 100%;
+# }}
+# .value-blue {{
+#     background-image:linear-gradient(89deg,#b9e6ff 0%,#228be6 75%,#79cafc 100%);
+#     text-shadow:0 2px 0 #fff, 0 0.5px 9px #79cafc, 0 6px 18px #228be6, 0 12px 38px #79cafc;
+#     -webkit-text-stroke:1.2px #1661a2;
+#     filter:drop-shadow(0 4px 18px #228be6);
+#     border-radius:10px;
+#     animation:popval 1.1s cubic-bezier(0.14,0.86,0.29,1.08) both, shimmer 3.2s linear infinite;
+#     background-size:200% 100%;
+# }}
+# .value-green {{
+#     font-size:56px!important;font-weight:900!important;font-family:'Poppins','Segoe UI',Arial,sans-serif;
+#     background:linear-gradient(90deg,#aef9e2 0%,#00df6c 60%,#50e2ad 100%);
+#     -webkit-background-clip:text!important;background-clip:text!important;-webkit-text-fill-color:transparent; color:transparent!important;
+#     text-shadow:0 3px 8px #fffbe8,0 5px 16px #00df6c,0 10px 30px #aef9e2; -webkit-text-stroke:1.2px #1a8d56;
+#     filter:drop-shadow(0 4px 16px #00df6c);border-radius:10px;box-shadow:0 1.5px 14px #8cffca; animation:popval 1.1s cubic-bezier(.14,.86,.29,1.08) both, shimmer 3.4s linear infinite;
+#     background-size:200% 100%;text-align:center;margin-bottom:4px;
+# }}
+# @keyframes popval {{
+#   0%{{opacity:0;transform:translateY(14px) scale(.93);}}
+#   55%{{opacity:1;transform:translateY(-3px)scale(1.10);}}
+#   85%{{transform:translateY(1px)scale(1.04);}}
+#   100%{{opacity:1;transform:translateY(0)scale(1);}}
+# }}
+# @keyframes shimmer {{
+#     0%{{background-position:-200% center;}}
+#     100%{{background-position:200% center;}}
+# }}
+# .title-green {{
+#     color:{GREEN}!important; font-size:26px!important; font-weight:750!important; margin-top:4px!important;
+# }}
+# .title-black {{
+#     color:#f7f5fa!important; font-size:17px!important; font-weight:800!important; margin-top:7px!important; width:100%;text-align:center!important;
+# }}
+# .chart-title-black {{
+#     color: #918b99!important; font-size:16px!important; font-weight:700!important; margin-bottom:3px!important; width:100%; text-align:left!important; padding-left:7px;
+# }}
+# .chart-container {{
+#     width:100%; height:110px; max-width:100%; overflow:hidden; box-sizing:border-box; margin:0; padding:0; display:block;
+# }}
+# @media (max-width:1100px){{.container{{grid-template-columns:1fr;grid-template-rows:auto;}}}}
+# </style>
+# </head>
+# <body>
+# <div class="container">
+
+#     <!-- COLUMN 1 (vertical): Today's Sale, Gauge, Sale Trend -->
+
+#     <div class="card top-card" style="grid-column:1; grid-row:1;">
+#       <canvas class="snow-bg" id="snowsale"></canvas>
+#       <div class="center-content">
+#         <div class="value-blue" id="salevalue">₹ {top_today_sale}</div>
+#         <div class="title-black">Today's Sale</div>
+#       </div>
+#     </div>
+
+#     <div class="card" style="grid-column:1; grid-row:2;">
+#       <canvas class="snow-bg" id="snowspeed"></canvas>
+#       {gauge_html}
+#     </div>
+
+#     <div class="card bottom-card" style="grid-column:1; grid-row:3;">
+#         <canvas class="snow-bg" id="snowsalechart"></canvas>
+#         <div class="chart-title-black">Sale Trend</div>
+#         <div id="sale_chart_container" class="chart-container">{sale_html}</div>
+#     </div>
+
+
+#     <!-- COLUMN 2 (vertical): Rejection Amount, %, Trend -->
+
+#     <div class="card top-card" style="grid-column:2; grid-row:1;">
+#       <canvas class="snow-bg" id="snowrejamt"></canvas>
+#       <div class="center-content">
+#         <div class="value-orange">₹ {rej_day_formatted}</div>
+#         <div class="title-black">Rejection Amount</div>
+#       </div>
+#     </div>
+
+#     <div class="card" style="grid-column:2; grid-row:2;">
+#       <canvas class="snow-bg" id="snowrej"></canvas>
+#       <div class="center-content">
+#         <div class="value-orange" id="rejval">{left_rej_pct}</div>
+#         <div class="title-black">Rejection %</div>
+#       </div>
+#     </div>
+
+#     <div class="card bottom-card" style="grid-column:2; grid-row:3;">
+#         <canvas class="snow-bg" id="snowrejchart"></canvas>
+#         <div class="chart-title-black">Rejection Trend</div>
+#         <div id="rej_chart_container" class="chart-container">{rej_html}</div>
+#     </div>
+
+
+#     <!-- COLUMN 3 (vertical): Date (small), COPQ, Rejection Cumulative -->
+
+#     <div class="card top-card" style="grid-column:3; grid-row:1;">
+#       <canvas class="snow-bg" id="snowdate"></canvas>
+#       <div class="center-content">
+#         <div class="value-blue" id="datevalue" style="font-size:32px!important;">{top_date}</div>
+#         <div class="title-black">Date</div>
+#       </div>
+#     </div>
+
+#     <div class="card" style="grid-column:3; grid-row:2;">
+#       <canvas class="snow-bg" id="snowcopq"></canvas>
+#       <div class="center-content">
+#         <div class="value-blue" style="font-size:40px!important;">COPQ Updating...</div>
+#       </div>
+#     </div>
+
+#     <div class="card bottom-card" style="grid-column:3; grid-row:3;">
+#       <canvas class="snow-bg" id="snowrejcum"></canvas>
+#       <div class="center-content">
+#         <div class="value-orange" id="rejcum">{bottom_rej_cum}</div>
+#         <div class="title-black">Rejection (Cumulative)</div>
+#       </div>
+#     </div>
+
+# </div>
+# <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+# <script>
+# function makeSnow(canvas) {{
+#     if (!canvas) return;
+#     var ctx = canvas.getContext('2d');
+#     var w = canvas.width = canvas.offsetWidth, h = canvas.height = canvas.offsetHeight;
+#     var sn = [];
+#     for(var i=0;i<36;i++) sn.push({{x:Math.random()*w,y:Math.random()*h,r:1.2+Math.random()*2,dx:0,dy:1.3+Math.random()*1.5}});
+#     function loop(){{
+#         ctx.clearRect(0,0,w,h);
+#         for(var i=0;i<sn.length;i++) {{
+#             ctx.beginPath();
+#             ctx.arc(sn[i].x,sn[i].y,sn[i].r,0,2*Math.PI);
+#             ctx.fillStyle="rgba(255,255,255,0.62)";
+#             ctx.fill();
+#             sn[i].x += sn[i].dx*(0.46+Math.random()*0.7);
+#             sn[i].y += sn[i].dy;
+#             if(sn[i].y>h){{ sn[i].y=0; sn[i].x=Math.random()*w; }}
+#             if(sn[i].x>w){{ sn[i].x=0; }}
+#         }}
+#         requestAnimationFrame(loop);
+#     }}
+#     loop();
+# }}
+# window.addEventListener("DOMContentLoaded",function() {{
+#     [
+#       "snowdate","snowsale","snowrej","snowrejcum",
+#       "snowspeed","snowsalechart","snowrejchart",
+#       "snowrejamt","snowcopq"
+#     ].forEach(function(id){{ var el=document.getElementById(id); if(el) setTimeout(function(){{makeSnow(el)}},120); }});
+# }});
+# function animateValue(element, start, end, duration, suffix="", prefix="") {{
+#     if(!element) return;
+#     if(isNaN(Number(end))) {{ element.textContent = prefix + end + suffix; return; }}
+#     const range = end - start;
+#     let startTime = null;
+#     function step(now) {{
+#         if (!startTime) startTime = now;
+#         let progress = Math.min((now - startTime) / duration, 1);
+#         let value = Math.floor(start + range * progress);
+#         element.textContent = prefix + value.toLocaleString('en-IN') + suffix;
+#         if (progress < 1) requestAnimationFrame(step);
+#         else element.textContent = prefix + Number(end).toLocaleString('en-IN') + suffix;
+#     }}
+#     requestAnimationFrame(step);
+# }}
+# window.addEventListener("DOMContentLoaded", function() {{
+#     animateValue(document.getElementById('salevalue'), 0, parseInt("{top_today_sale.replace(',', '')}"), 1100, "", "₹ ");
+#     animateValue(document.getElementById('oeevalue'), 0, parseFloat("{top_oee.replace('%', '')}"), 1100, "%");
+#     animateValue(document.getElementById('rejval'), 0, parseFloat("{left_rej_pct.replace('%', '').strip()}"), 1100, "%");
+#     animateValue(document.getElementById('rejcum'), 0, parseInt("{bottom_rej_cum.replace(',', '')}"), 1100, "", "₹ ");
+#     animateValue(document.getElementById('achval'), 0, parseFloat("{achieved_pct_val}"), 1100, "%");
+# }});
+# </script>
+# </body>
+# </html>
+# """
+
+# st.components.v1.html(html_template, height=1100, scrolling=False)
+
 
 
 
