@@ -469,7 +469,7 @@ body {{
       <canvas class="snow-bg" id="snowsale"></canvas>
       <div class="center-content">
         <div class="value-blue" id="salevalue">₹ {top_today_sale}</div>
-        <div class="title-black">Today's Sale</div>
+        <div class="title-black">Yesterday's Sale</div>
       </div>
     </div>
     
@@ -859,6 +859,7 @@ st.components.v1.html(html_template, height=770, scrolling=True)
 # """
 
 # st.components.v1.html(html_template, height=1100, scrolling=False)
+
 
 
 
