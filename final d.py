@@ -464,13 +464,7 @@ body {{
 <body>
 <div class="container">
 
-    <div class="card top-card">
-      <canvas class="snow-bg" id="snowdate"></canvas>
-      <div class="center-content">
-        <div class="value-blue oneline" id="datevalue">{top_date}</div>
-        <div class="title-black">Date</div>
-      </div>
-    </div>
+    
     <div class="card top-card">
       <canvas class="snow-bg" id="snowsale"></canvas>
       <div class="center-content">
@@ -478,13 +472,7 @@ body {{
         <div class="title-black">Today's Sale</div>
       </div>
     </div>
-    <div class="card top-card">
-      <canvas class="snow-bg" id="snowoee"></canvas>
-      <div class="center-content">
-        <div class="value-orange" id="oeevalue">{top_oee}</div>
-        <div class="title-black">OEE %</div>
-      </div>
-    </div>
+    
     <div class="card">
       <canvas class="snow-bg" id="snowrej"></canvas>
       <div class="center-content">
@@ -492,6 +480,20 @@ body {{
         <div class="title-black">Rejection %</div>
       </div>
     </div>
+    
+    <div class="card top-card">
+      <canvas class="snow-bg" id="snowdate"></canvas>
+      <div class="center-content">
+        <div class="value-blue oneline" id="datevalue">{top_date}</div>
+        <div class="title-black">Date</div>
+      </div>
+    </div>
+    
+    <div class="card">
+      <canvas class="snow-bg" id="snowspeed"></canvas>
+      {gauge_html}
+    </div>
+    
     <div class="card">
       <canvas class="snow-bg" id="snowach"></canvas>
       <div class="center-content">
@@ -499,10 +501,27 @@ body {{
         <div class="title-green">Achieved %</div>
       </div>
     </div>
-    <div class="card">
-      <canvas class="snow-bg" id="snowspeed"></canvas>
-      {gauge_html}
+    
+    <div class="card top-card">
+      <canvas class="snow-bg" id="snowoee"></canvas>
+      <div class="center-content">
+        <div class="value-blue" id="oeevalue">{top_oee}</div>
+        <div class="title-black">OEE %</div>
+      </div>
     </div>
+
+    <div class="card bottom-card">
+        <canvas class="snow-bg" id="snowsalechart"></canvas>
+        <div class="chart-title-black">Sale Trend</div>
+        <div id="sale_chart_container" class="chart-container">{sale_html}</div>
+    </div>
+
+    <div class="card bottom-card">
+        <canvas class="snow-bg" id="snowrejchart"></canvas>
+        <div class="chart-title-black">Rejection Trend</div>
+        <div id="rej_chart_container" class="chart-container">{rej_html}</div>
+    </div>
+    
     <div class="card bottom-card">
       <canvas class="snow-bg" id="snowrejcum"></canvas>
       <div class="center-content">
@@ -510,16 +529,7 @@ body {{
         <div class="title-black">Rejection (Cumulative)</div>
       </div>
     </div>
-    <div class="card bottom-card">
-        <canvas class="snow-bg" id="snowsalechart"></canvas>
-        <div class="chart-title-black">Sale Trend</div>
-        <div id="sale_chart_container" class="chart-container">{sale_html}</div>
-    </div>
-    <div class="card bottom-card">
-        <canvas class="snow-bg" id="snowrejchart"></canvas>
-        <div class="chart-title-black">Rejection Trend</div>
-        <div id="rej_chart_container" class="chart-container">{rej_html}</div>
-    </div>
+    
 </div>
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 <script>
@@ -848,6 +858,7 @@ st.components.v1.html(html_template, height=770, scrolling=True)
 # """
 
 # st.components.v1.html(html_template, height=1100, scrolling=False)
+
 
 
 
