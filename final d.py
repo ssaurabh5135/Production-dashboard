@@ -521,7 +521,7 @@ body {{
     <div class="card top-card">
       <canvas class="snow-bg" id="snowsale"></canvas>
       <div class="center-content">
-        <div class="value-blue" id="salevalue">₹ {top_today_sale}</div>
+        <div class="value-blue" style="font-size:42px!important;" id="salevalue">₹ {top_today_sale}</div>
         <div class="title-black">Yesterday's Sale</div>
       </div>
     </div>
@@ -530,7 +530,7 @@ body {{
     <div class="card">
       <canvas class="snow-bg" id="snowrej"></canvas>
       <div class="center-content">
-        <div class="value-orange" id="rejamtvalue">₹ {left_rej_amt}</div>
+        <div class="value-orange" style="font-size:42px!important;" id="rejamtvalue">₹ {left_rej_amt}</div>
         <div class="title-black">Rejection Amount</div>
       </div>
     </div>
@@ -539,7 +539,7 @@ body {{
     <div class="card top-card">
       <canvas class="snow-bg" id="snowoee"></canvas>
       <div class="center-content">
-        <div class="value-blue" id="oeevalue">{top_oee}</div>
+        <div class="value-blue" style="font-size:42px!important;" id="oeevalue">{top_oee}</div>
         <div class="title-black">OEE %</div>
       </div>
     </div>
@@ -557,7 +557,7 @@ body {{
     <div class="card">
       <canvas class="snow-bg" id="snowach"></canvas>
       <div class="center-content">
-        <div class="value-orange" id="rejpctvalue">{left_rej_pct}</div>
+        <div class="value-orange" style="font-size:42px!important;" id="rejpctvalue">{left_rej_pct}</div>
         <div class="title-black">Rejection %</div>
       </div>
     </div>
@@ -566,7 +566,7 @@ body {{
     <div class="card top-card">
       <canvas class="snow-bg" id="snowcopq"></canvas>
       <div class="center-content">
-        <div class="value-blue" style="font-size:40px!important;">COPQ Pending...</div>
+        <div class="value-blue" style="font-size:42px!important;">COPQ Pending...</div>
       </div>
     </div>
 
@@ -588,7 +588,7 @@ body {{
     <div class="card bottom-card">
       <canvas class="snow-bg" id="snowrejcum"></canvas>
       <div class="center-content">
-        <div class="value-orange" id="rejcum">{bottom_rej_cum}</div>
+        <div class="value-orange" style="font-size:42px!important;" id="rejcum">{bottom_rej_cum}</div>
         <div class="title-black">Rejection (Cumulative)</div>
       </div>
     </div>
@@ -1350,6 +1350,7 @@ st.components.v1.html(html_template, height=900, scrolling=True)
 # """
 
 # st.components.v1.html(html_template, height=770, scrolling=True)
+
 
 
 
