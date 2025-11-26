@@ -1231,7 +1231,271 @@ bottom_rej_cum = format_inr(rej_cum)
 
 ##################################################################
 
-# ---------- HTML + CSS UPDATED BLOCK (NO TOP / LEFT / RIGHT TOUCH + FONT 38PX, FIXED RIGHT SIDE) ---------- #
+# # ---------- HTML + CSS UPDATED BLOCK (NO TOP / LEFT / RIGHT TOUCH + FONT 38PX, FIXED RIGHT SIDE) ---------- #
+
+# st.markdown(
+#     f"""
+#     <style>
+#     body, .stApp {{
+#         background: url("data:image/jpeg;base64,{bg_b64}") no-repeat center center fixed !important;
+#         background-size: cover !important;
+#         background-position: center center !important;
+#         margin: 0 !important;
+#         padding: 0 !important;
+#         overflow: hidden !important;
+#     }}
+#     .block-container {{
+#         padding: 0 !important;
+#         margin: 0 !important;
+#     }}
+#     </style>
+#     """,
+#     unsafe_allow_html=True
+# )
+
+# html_template = f"""
+# <!doctype html>
+# <html>
+# <head>
+# <meta charset="utf-8">
+
+# <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700;900&display=swap" rel="stylesheet">
+
+# <style>
+
+# :root {{
+#     --blue1: #8ad1ff;
+#     --blue2: #4ca0ff;
+#     --blue3: #0d6efd;
+
+#     --orange1: #ffd699;
+#     --orange2: #ff9334;
+#     --orange3: #ff6a00;
+
+#     --green1: #a6ffd9;
+#     --green2: #00d97e;
+# }}
+
+# body {{
+#     margin: 0;
+#     padding: 0;
+#     font-family: "Fredoka", sans-serif;
+#     background: none !important;
+# }}
+
+# .container {{
+#     box-sizing: border-box; /* FIX: include padding inside width */
+#     width: 100%;
+#     height: 100vh;
+#     padding: 60px 60px 0 60px !important; /* NO TOUCH TOP/LEFT/RIGHT */
+#     display: grid;
+#     grid-template-columns: 1fr 1fr 1fr;
+#     grid-template-rows: 130px 220px 140px 140px;
+#     gap: 24px;
+#     max-width: 1700px;
+#     max-height: 900px;
+#     margin: auto;
+# }}
+
+# .card {{
+#     position: relative;
+#     border-radius: 20px;
+#     padding: 0;
+#     display: flex;
+#     flex-direction: column;
+#     justify-content: center;
+#     align-items: center;
+#     backdrop-filter: blur(12px) saturate(180%);
+#     background: rgba(255,255,255,0.08);
+#     border: 1px solid rgba(255,255,255,0.15);
+#     box-shadow:
+#         0 0 15px rgba(255,255,255,0.28),
+#         0 10px 30px rgba(0,0,0,0.5),
+#         inset 0 0 20px rgba(255,255,255,0.12);
+# }}
+
+# .value-blue {{
+#     font-size: 42px !important; /* UPDATED */
+#     font-weight: 900;
+#     background: linear-gradient(180deg, var(--blue1), var(--blue2), var(--blue3));
+#     -webkit-background-clip: text;
+#     -webkit-text-fill-color: transparent;
+#     text-shadow:
+#         0px 4px 6px rgba(0,153,255,0.6),
+#         0px 12px 22px rgba(0,78,255,0.55),
+#         0px 18px 40px rgba(0,40,140,0.9);
+# }}
+
+# .value-orange {{
+#     font-size: 42px !important; /* UPDATED */
+#     font-weight: 900;
+#     background: linear-gradient(180deg, var(--orange1), var(--orange2), var(--orange3));
+#     -webkit-background-clip: text;
+#     -webkit-text-fill-color: transparent;
+#     text-shadow:
+#         0px 4px 6px rgba(255,165,0,0.6),
+#         0px 12px 22px rgba(255,90,0,0.55),
+#         0px 18px 40px rgba(255,50,0,0.9);
+# }}
+
+# .value-green {{
+#     font-size: 42px !important; /* UPDATED */
+#     font-weight: 900;
+#     background: linear-gradient(180deg, var(--green1), var(--green2));
+#     -webkit-background-clip: text;
+#     -webkit-text-fill-color: transparent;
+#     text-shadow:
+#         0px 4px 6px rgba(0,255,180,0.6),
+#         0px 12px 22px rgba(0,160,100,0.55),
+#         0px 18px 40px rgba(0,120,80,0.9);
+# }}
+
+# .title-black {{
+#     color: #f3f3f7 !important;
+#     font-size: 17px;
+#     font-weight: 800;
+#     margin-top: 6px;
+#     text-align: center;
+# }}
+
+# .chart-title-black {{
+#     color: #fff !important;
+#     font-size: 16px;
+#     font-weight: 700;
+#     text-align: left;
+#     width: 100%;
+#     padding-left: 10px;
+# }}
+
+# .chart-container {{
+#     width: 100%;
+#     height: 110px;
+#     overflow: hidden;
+# }}
+
+# .snow-bg {{
+#     position:absolute;
+#     left:0; top:0;
+#     width:100%; height:100%;
+#     opacity:0.5;
+#     pointer-events:none;
+# }}
+
+# .center-content {{
+#     display:flex;
+#     flex-direction:column;
+#     align-items:center;
+#     width:100%;
+# }}
+
+# </style>
+# </head>
+
+# <body>
+
+# <div class="container">
+
+# <div class="card">
+#     <canvas class="snow-bg" id="snowsale"></canvas>
+#     <div class="center-content">
+#         <div class="value-blue" id="salevalue">₹ {top_today_sale}</div>
+#         <div class="title-black">Yesterday's Sale</div>
+#     </div>
+# </div>
+
+# <div class="card">
+#     <canvas class="snow-bg" id="snowrej"></canvas>
+#     <div class="center-content">
+#         <div class="value-orange" id="rejamtvalue">₹ {left_rej_amt}</div>
+#         <div class="title-black">Rejection Amount</div>
+#     </div>
+# </div>
+
+# <div class="card">
+#     <canvas class="snow-bg" id="snowoee"></canvas>
+#     <div class="center-content">
+#         <div class="value-blue" id="oeevalue">{top_oee}</div>
+#         <div class="title-black">OEE %</div>
+#     </div>
+# </div>
+
+# <div class="card">
+#     <canvas class="snow-bg" id="snowspeed"></canvas>
+#     {gauge_html}
+# </div>
+
+# <div class="card">
+#     <canvas class="snow-bg" id="snowach"></canvas>
+#     <div class="center-content">
+#         <div class="value-orange" id="rejpctvalue">{left_rej_pct}</div>
+#         <div class="title-black">Rejection %</div>
+#     </div>
+# </div>
+
+# <div class="card">
+#     <canvas class="snow-bg" id="snowcopq"></canvas>
+#     <div class="center-content">
+#         <div class="value-blue">COPQ Pending...</div>
+#     </div>
+# </div>
+
+# <div class="card">
+#     <canvas class="snow-bg" id="snowsalechart"></canvas>
+#     <div class="chart-title-black">Sale Trend</div>
+#     <div id="sale_chart_container" class="chart-container">{sale_html}</div>
+# </div>
+
+# <div class="card">
+#     <canvas class="snow-bg" id="snowrejchart"></canvas>
+#     <div class="chart-title-black">Rejection Trend</div>
+#     <div id="rej_chart_container" class="chart-container">{rej_html}</div>
+# </div>
+
+# <div class="card">
+#     <canvas class="snow-bg" id="snowrejcum"></canvas>
+#     <div class="center-content">
+#         <div class="value-orange" id="rejcum">{bottom_rej_cum}</div>
+#         <div class="title-black">Rejection (Cumulative)</div>
+#     </div>
+# </div>
+
+# <div class="card">
+#     <canvas class="snow-bg" id="snowcumsale"></canvas>
+#     <div class="center-content">
+#         <div class="value-blue" id="cumsalevalue">₹ {format_inr(total_cum)}</div>
+#         <div class="title-black">Sale Cumulative</div>
+#     </div>
+# </div>
+
+# <div class="card">
+#     <canvas class="snow-bg" id="snowgap"></canvas>
+#     <div class="center-content">
+#         <div class="value-blue" id="gapvalue">...</div>
+#         <div class="title-black"></div>
+#     </div>
+# </div>
+
+# <div class="card">
+#     <canvas class="snow-bg" id="snowempty"></canvas>
+#     <div class="center-content">
+#         <div class="value-blue">&nbsp;</div>
+#     </div>
+# </div>
+
+# </div>
+
+# </body>
+# </html>
+# """
+
+# st.components.v1.html(html_template, height=900, scrolling=True)
+
+
+##############################################3rd ###################
+
+
+# ---------- FIXED FULL UPDATED BLOCK (REJECTION % RESTORED — SAME 3D STYLE — NOTHING CHANGED EXCEPT FIX) ---------- #
+# (YOUR LAST WORKING BLOCK + GAUGE CENTER FIX ONLY — REJECTION % 3D STYLE RESTORED) #
 
 st.markdown(
     f"""
@@ -1280,14 +1544,13 @@ body {{
     margin: 0;
     padding: 0;
     font-family: "Fredoka", sans-serif;
-    background: none !important;
 }}
 
 .container {{
-    box-sizing: border-box; /* FIX: include padding inside width */
+    box-sizing: border-box;
     width: 100%;
     height: 100vh;
-    padding: 60px 60px 0 60px !important; /* NO TOUCH TOP/LEFT/RIGHT */
+    padding: 60px 60px 0 60px !important;
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     grid-template-rows: 130px 220px 140px 140px;
@@ -1315,39 +1578,36 @@ body {{
 }}
 
 .value-blue {{
-    font-size: 42px !important; /* UPDATED */
+    font-size: 38px !important;
     font-weight: 900;
     background: linear-gradient(180deg, var(--blue1), var(--blue2), var(--blue3));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    text-shadow:
-        0px 4px 6px rgba(0,153,255,0.6),
-        0px 12px 22px rgba(0,78,255,0.55),
-        0px 18px 40px rgba(0,40,140,0.9);
+    text-shadow:0px 4px 6px rgba(0,153,255,0.6),
+                0px 12px 22px rgba(0,78,255,0.55),
+                0px 18px 40px rgba(0,40,140,0.9);
 }}
 
 .value-orange {{
-    font-size: 42px !important; /* UPDATED */
+    font-size: 38px !important;
     font-weight: 900;
     background: linear-gradient(180deg, var(--orange1), var(--orange2), var(--orange3));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    text-shadow:
-        0px 4px 6px rgba(255,165,0,0.6),
-        0px 12px 22px rgba(255,90,0,0.55),
-        0px 18px 40px rgba(255,50,0,0.9);
+    text-shadow:0px 4px 6px rgba(255,165,0,0.6),
+                0px 12px 22px rgba(255,90,0,0.55),
+                0px 18px 40px rgba(255,50,0,0.9);
 }}
 
 .value-green {{
-    font-size: 42px !important; /* UPDATED */
+    font-size: 38px !important;
     font-weight: 900;
     background: linear-gradient(180deg, var(--green1), var(--green2));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    text-shadow:
-        0px 4px 6px rgba(0,255,180,0.6),
-        0px 12px 22px rgba(0,160,100,0.55),
-        0px 18px 40px rgba(0,120,80,0.9);
+    text-shadow:0px 4px 6px rgba(0,255,180,0.6),
+                0px 12px 22px rgba(0,160,100,0.55),
+                0px 18px 40px rgba(0,120,80,0.9);
 }}
 
 .title-black {{
@@ -1378,7 +1638,6 @@ body {{
     left:0; top:0;
     width:100%; height:100%;
     opacity:0.5;
-    pointer-events:none;
 }}
 
 .center-content {{
@@ -1386,6 +1645,28 @@ body {{
     flex-direction:column;
     align-items:center;
     width:100%;
+}}
+
+.gauge-outer {{
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}}
+
+.gauge-inner {{
+    width: 100%;
+    height: 100%;
+    position: relative;
+}}
+
+.gauge-center-text {{
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%, -50%);
 }}
 
 </style>
@@ -1419,15 +1700,30 @@ body {{
     </div>
 </div>
 
+<!-- FIXED GAUGE — 3D CENTER VALUE + NO SHIFT -->
 <div class="card">
     <canvas class="snow-bg" id="snowspeed"></canvas>
-    {gauge_html}
+
+    <div class="gauge-outer">
+        <div class="gauge-inner">
+            {gauge_html}
+
+            <!-- ★ 3D TEXT CENTER (SAME STYLE AS OTHER VALUES) ★ -->
+            <div class="gauge-center-text">
+                <div class="value-blue" style="font-size:34px !important;">{top_oee}</div>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <div class="card">
     <canvas class="snow-bg" id="snowach"></canvas>
     <div class="center-content">
+
+        <!-- ★ REJECTION % RESTORED TO SAME 3D ORANGE STYLE ★ -->
         <div class="value-orange" id="rejpctvalue">{left_rej_pct}</div>
+
         <div class="title-black">Rejection %</div>
     </div>
 </div>
@@ -1489,12 +1785,6 @@ body {{
 """
 
 st.components.v1.html(html_template, height=900, scrolling=True)
-
-
-##############################################3rd ###################
-
-
-
 
 
 
@@ -2089,6 +2379,7 @@ st.components.v1.html(html_template, height=900, scrolling=True)
 # """
 
 # st.components.v1.html(html_template, height=770, scrolling=True)
+
 
 
 
