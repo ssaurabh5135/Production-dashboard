@@ -312,11 +312,84 @@ left_rej_pct = f"{rej_pct:.1f}%"
 
 bottom_rej_cum = format_inr(rej_cum)
 
+# # ---------- HTML + CSS DASHBOARD LAYOUT ---------- #
+
+# st.markdown(
+#     f"""
+#     <style>
+#     body, .stApp {{
+#         background: url("data:image/jpeg;base64,{bg_b64}") no-repeat center center fixed !important;
+#         background-size: cover !important;
+#         background-position: center center !important;
+#         min-height: 100vh !important;
+#         min-width: 100vw !important;
+#         width: 100vw !important;
+#         height: 100vh !important;
+#         overflow: hidden !important;
+#         margin: 0 !important;
+#         padding: 0 !important;
+#     }}
+#     .block-container {{
+#         padding-top: 0rem !important;
+#         padding-bottom: 0rem !important;
+#         padding-left: 0rem !important;
+#         padding-right: 0rem !important;
+#     }}
+#     </style>
+#     """,
+#     unsafe_allow_html=True
+# )
+
+# html_template = f"""
+# <!doctype html>
+# <html>
+# <head>
+# <meta charset="utf-8">
+# <style>
+# :root {{
+#     --card-radius: 17px;
+#     --orange: {BUTTERFLY_ORANGE};
+#     --blue: {BLUE};
+#     --green: {GREEN};
+# }}
+# body {{
+#     margin:0;
+#     padding:0;
+#     font-family:'Poppins',sans-serif;
+#     background: none !important;
+#     color:#091128;
+# }}
+# .container {{
+#     box-sizing: border-box;
+#     width: 100vw;
+#     height: 100vh;
+#     padding: 5vw;
+#     display: grid;
+#     grid-template-columns: 1fr 1fr 1fr;
+#     grid-template-rows: 130px 220px 140px 140px;   /* NEW ROW ADDED */
+#     gap: 18px;
+#     row-gap: 30px;
+#     max-width: 1700px;
+#     max-height: 900px;
+#     margin: auto;
+# }}
+
 # ---------- HTML + CSS DASHBOARD LAYOUT ---------- #
+
+# Add cartoon font safely (outside f-string)
+st.markdown("""
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+""", unsafe_allow_html=True)
 
 st.markdown(
     f"""
     <style>
+
+    /* Apply cartoon font everywhere */
+    * {{
+        font-family: 'Fredoka', sans-serif !important;
+    }}
+
     body, .stApp {{
         background: url("data:image/jpeg;base64,{bg_b64}") no-repeat center center fixed !important;
         background-size: cover !important;
@@ -329,12 +402,14 @@ st.markdown(
         margin: 0 !important;
         padding: 0 !important;
     }}
+
     .block-container {{
         padding-top: 0rem !important;
         padding-bottom: 0rem !important;
         padding-left: 0rem !important;
         padding-right: 0rem !important;
     }}
+
     </style>
     """,
     unsafe_allow_html=True
@@ -352,13 +427,15 @@ html_template = f"""
     --blue: {BLUE};
     --green: {GREEN};
 }}
+
 body {{
     margin:0;
     padding:0;
-    font-family:'Poppins',sans-serif;
+    font-family:'Fredoka', sans-serif !important; /* cartoon font applied */
     background: none !important;
     color:#091128;
 }}
+
 .container {{
     box-sizing: border-box;
     width: 100vw;
@@ -366,13 +443,14 @@ body {{
     padding: 5vw;
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
-    grid-template-rows: 130px 220px 140px 140px;   /* NEW ROW ADDED */
+    grid-template-rows: 130px 220px 140px 140px; /* NEW ROW ADDED */
     gap: 18px;
     row-gap: 30px;
     max-width: 1700px;
     max-height: 900px;
     margin: auto;
 }}
+"""
 
 /* CARD STYLE (unchanged, glowing, blur glass) */
 .card {{
@@ -1350,6 +1428,7 @@ st.components.v1.html(html_template, height=900, scrolling=True)
 # """
 
 # st.components.v1.html(html_template, height=770, scrolling=True)
+
 
 
 
