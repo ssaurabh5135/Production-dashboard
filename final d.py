@@ -519,7 +519,7 @@ body {{
 
     <!-- Yesterday's Sale -->
     <div class="card top-card">
-      # <canvas class="snow-bg" id="snowsale"></canvas>
+      <canvas class="snow-bg" id="snowsale"></canvas>
       <div class="center-content">
         <div class="value-blue" style="font-size:42px!important;" id="salevalue">₹ {top_today_sale}</div>
         <div class="title-black">Yesterday's Sale</div>
@@ -1350,6 +1350,7 @@ st.components.v1.html(html_template, height=900, scrolling=True)
 # """
 
 # st.components.v1.html(html_template, height=770, scrolling=True)
+
 
 
 
