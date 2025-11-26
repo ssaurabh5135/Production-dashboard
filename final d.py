@@ -391,42 +391,23 @@ body {{
 # }}
 
 .card {{
-    background: rgba(255,255,255,0.10);
-    border-radius: 18px;
-    padding: 0;
-    border: 1px solid rgba(255,255,255,0.25);
+    background: rgba(255,255,255,0.12);
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,0.18);
+    backdrop-filter: blur(10px) saturate(150%);
+    -webkit-backdrop-filter: blur(10px) saturate(150%);
 
-    /* Frosted glass */
-    backdrop-filter: blur(8px) saturate(160%);
-    -webkit-backdrop-filter: blur(8px) saturate(160%);
-
-    /* Inner glow */
     box-shadow:
-        inset 0 0 15px rgba(255,255,255,0.25),
-        inset 0 0 25px rgba(255,255,255,0.15),
+        0 4px 14px rgba(0,0,0,0.22),
+        0 0 12px rgba(255,255,255,0.25);
 
-        /* Outer neon glow */
-        0 0 12px rgba(255,255,255,0.35),
-        0 0 24px rgba(0,150,255,0.25),
-        0 0 40px rgba(0,150,255,0.18);
-
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    transition: all 0.35s ease;
+    transition: 0.25s ease-in-out;
 }}
 
-/* Hover glow boost */
 .card:hover {{
     box-shadow:
-        inset 0 0 20px rgba(255,255,255,0.35),
-        inset 0 0 35px rgba(255,255,255,0.25),
-        0 0 16px rgba(255,255,255,0.55),
-        0 0 35px rgba(0,150,255,0.45),
-        0 0 70px rgba(0,150,255,0.35);
+        0 6px 20px rgba(0,0,0,0.28),
+        0 0 18px rgba(255,255,255,0.32);
     transform: translateY(-2px);
 }}
 
@@ -1390,6 +1371,7 @@ st.components.v1.html(html_template, height=900, scrolling=True)
 # """
 
 # st.components.v1.html(html_template, height=770, scrolling=True)
+
 
 
 
