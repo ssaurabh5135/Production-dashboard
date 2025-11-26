@@ -382,7 +382,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.markdown(
-    f"""
+    """
     <style>
 
     /* Apply cartoon font everywhere */
@@ -1428,6 +1428,7 @@ st.components.v1.html(html_template, height=900, scrolling=True)
 # """
 
 # st.components.v1.html(html_template, height=770, scrolling=True)
+
 
 
 
