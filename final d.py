@@ -1116,22 +1116,22 @@ function animateValue(element, start, end, duration, suffix="", prefix="") {{
 
 window.addEventListener("DOMContentLoaded", function() {{
 
-    animateValue(
-        document.getElementById('salevalue'),
-        0,
-        parseInt("{top_today_sale.replace(',', '')}"),
-        1100,
-        "",
-        "₹ "
-    );
+    # animateValue(
+    #     document.getElementById('salevalue'),
+    #     0,
+    #     parseInt("{top_today_sale.replace(',', '')}"),
+    #     1100,
+    #     "",
+    #     "₹ "
+    # );
 
-    animateValue(
-        document.getElementById('oeevalue'),
-        0,
-        parseFloat("{top_oee.replace('%', '')}"),
-        1100,
-        "%"
-    );
+    # animateValue(
+    #     document.getElementById('oeevalue'),
+    #     0,
+    #     parseFloat("{top_oee.replace('%', '')}"),
+    #     1100,
+    #     "%"
+    # );
 
     animateValue(
         document.getElementById('rejamtvalue'),
@@ -1776,6 +1776,7 @@ st.components.v1.html(html_template, height=900, scrolling=True)
 # """
 
 # st.components.v1.html(html_template, height=770, scrolling=True)
+
 
 
 
