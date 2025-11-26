@@ -826,19 +826,59 @@ body {{
 }}
 
 .card {{
-    background: linear-gradient(184deg,rgba(255,255,255,0.13) 12%,rgba(255,255,255,0.04) 83%);
-    border-radius: 16px;
-    box-shadow: 0 6px 18px rgba(4, 8, 15, 0.13);
-    border: 1px solid rgba(255,255,255,0.08);
-    backdrop-filter: blur(6px) saturate(120%);
-    -webkit-backdrop-filter: blur(6px);
+    background: rgba(255,255,255,0.10);
+    border-radius: 18px;
+    padding: 0;
+    border: 1px solid rgba(255,255,255,0.25);
+
+    /* Frosted glass */
+    backdrop-filter: blur(8px) saturate(160%);
+    -webkit-backdrop-filter: blur(8px) saturate(160%);
+
+    /* Inner glow */
+    box-shadow:
+        inset 0 0 15px rgba(255,255,255,0.25),
+        inset 0 0 25px rgba(255,255,255,0.15),
+
+        /* Outer neon glow */
+        0 0 12px rgba(255,255,255,0.35),
+        0 0 24px rgba(0,150,255,0.25),
+        0 0 40px rgba(0,150,255,0.18);
+
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    position: relative;
     overflow: hidden;
+    transition: all 0.35s ease;
 }}
+
+/* Hover glow boost */
+.card:hover {{
+    box-shadow:
+        inset 0 0 20px rgba(255,255,255,0.35),
+        inset 0 0 35px rgba(255,255,255,0.25),
+        0 0 16px rgba(255,255,255,0.55),
+        0 0 35px rgba(0,150,255,0.45),
+        0 0 70px rgba(0,150,255,0.35);
+    transform: translateY(-2px);
+}}
+
+# .card {{
+#     background: linear-gradient(184deg,rgba(255,255,255,0.13) 12%,rgba(255,255,255,0.04) 83%);
+#     border-radius: 16px;
+#     box-shadow: 0 6px 18px rgba(4, 8, 15, 0.13);
+#     border: 1px solid rgba(255,255,255,0.08);
+#     backdrop-filter: blur(6px) saturate(120%);
+#     -webkit-backdrop-filter: blur(6px);
+#     display: flex;
+#     flex-direction: column;
+#     align-items: center;
+#     justify-content: center;
+#     position: relative;
+#     overflow: hidden;
+# }}
 
 .snow-bg {{
     pointer-events:none;
@@ -1776,6 +1816,7 @@ st.components.v1.html(html_template, height=900, scrolling=True)
 # """
 
 # st.components.v1.html(html_template, height=770, scrolling=True)
+
 
 
 
