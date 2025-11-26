@@ -1315,7 +1315,7 @@ body {{
 }}
 
 .value-blue {{
-    font-size: 38px !important; /* UPDATED */
+    font-size: 42px !important; /* UPDATED */
     font-weight: 900;
     background: linear-gradient(180deg, var(--blue1), var(--blue2), var(--blue3));
     -webkit-background-clip: text;
@@ -1327,7 +1327,7 @@ body {{
 }}
 
 .value-orange {{
-    font-size: 38px !important; /* UPDATED */
+    font-size: 42px !important; /* UPDATED */
     font-weight: 900;
     background: linear-gradient(180deg, var(--orange1), var(--orange2), var(--orange3));
     -webkit-background-clip: text;
@@ -1339,7 +1339,7 @@ body {{
 }}
 
 .value-green {{
-    font-size: 38px !important; /* UPDATED */
+    font-size: 42px !important; /* UPDATED */
     font-weight: 900;
     background: linear-gradient(180deg, var(--green1), var(--green2));
     -webkit-background-clip: text;
@@ -2086,6 +2086,7 @@ st.components.v1.html(html_template, height=900, scrolling=True)
 # """
 
 # st.components.v1.html(html_template, height=770, scrolling=True)
+
 
 
 
