@@ -1288,6 +1288,7 @@ body {{
     height: 100vh;
     padding: 3vw;
     display: grid;
+    padding-top:40px !important;
     grid-template-columns: 1fr 1fr 1fr;
     grid-template-rows: 130px 220px 140px 140px;
     gap: 24px;
@@ -2206,6 +2207,7 @@ st.components.v1.html(html_template, height=900, scrolling=True)
 # """
 
 # st.components.v1.html(html_template, height=770, scrolling=True)
+
 
 
 
