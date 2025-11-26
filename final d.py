@@ -312,7 +312,9 @@ left_rej_pct = f"{rej_pct:.1f}%"
 
 bottom_rej_cum = format_inr(rej_cum)
 
-# # # ---------- HTML + CSS DASHBOARD LAYOUT ---------- #
+
+
+# ######2nd update##################################################################
 
 # st.markdown(
 #     f"""
@@ -345,6 +347,9 @@ bottom_rej_cum = format_inr(rej_cum)
 # <html>
 # <head>
 # <meta charset="utf-8">
+
+# <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+
 # <style>
 # :root {{
 #     --card-radius: 17px;
@@ -352,13 +357,15 @@ bottom_rej_cum = format_inr(rej_cum)
 #     --blue: {BLUE};
 #     --green: {GREEN};
 # }}
+
 # body {{
 #     margin:0;
 #     padding:0;
-#     font-family:'Poppins',sans-serif;
+#     font-family:'Fredoka',sans-serif !important;
 #     background: none !important;
 #     color:#091128;
 # }}
+
 # .container {{
 #     box-sizing: border-box;
 #     width: 100vw;
@@ -366,7 +373,7 @@ bottom_rej_cum = format_inr(rej_cum)
 #     padding: 5vw;
 #     display: grid;
 #     grid-template-columns: 1fr 1fr 1fr;
-#     grid-template-rows: 130px 220px 140px 140px;   /* NEW ROW ADDED */
+#     grid-template-rows: 130px 220px 140px 140px;
 #     gap: 18px;
 #     row-gap: 30px;
 #     max-width: 1700px;
@@ -374,22 +381,60 @@ bottom_rej_cum = format_inr(rej_cum)
 #     margin: auto;
 # }}
 
-
-# /* CARD STYLE (unchanged, glowing, blur glass) */
 # .card {{
-#     background: linear-gradient(184deg,rgba(255,255,255,0.13) 12%,rgba(255,255,255,0.04) 83%);
-#     border-radius: 16px;
-#     box-shadow: 0 6px 18px rgba(4, 8, 15, 0.13);
-#     border: 1px solid rgba(255,255,255,0.08);
-#     backdrop-filter: blur(6px) saturate(120%);
-#     -webkit-backdrop-filter: blur(6px);
+#     background: rgba(255,255,255,0.10);
+#     border-radius: 18px;
+#     padding: 0;
+#     border: 1px solid rgba(255,255,255,0.25);
+
+#     /* Frosted glass */
+#     backdrop-filter: blur(8px) saturate(160%);
+#     -webkit-backdrop-filter: blur(8px) saturate(160%);
+
+#     /* Inner glow */
+#     box-shadow:
+#         inset 0 0 15px rgba(255,255,255,0.25),
+#         inset 0 0 25px rgba(255,255,255,0.15),
+
+#         /* Outer neon glow */
+#         0 0 12px rgba(255,255,255,0.35),
+#         0 0 24px rgba(0,150,255,0.25),
+#         0 0 40px rgba(0,150,255,0.18);
+
+#     position: relative;
 #     display: flex;
 #     flex-direction: column;
 #     align-items: center;
 #     justify-content: center;
-#     position: relative;
 #     overflow: hidden;
+#     transition: all 0.35s ease;
 # }}
+
+# /* Hover glow boost */
+# .card:hover {{
+#     box-shadow:
+#         inset 0 0 20px rgba(255,255,255,0.35),
+#         inset 0 0 35px rgba(255,255,255,0.25),
+#         0 0 16px rgba(255,255,255,0.55),
+#         0 0 35px rgba(0,150,255,0.45),
+#         0 0 70px rgba(0,150,255,0.35);
+#     transform: translateY(-2px);
+# }}
+
+# # .card {{
+# #     background: linear-gradient(184deg,rgba(255,255,255,0.13) 12%,rgba(255,255,255,0.04) 83%);
+# #     border-radius: 16px;
+# #     box-shadow: 0 6px 18px rgba(4, 8, 15, 0.13);
+# #     border: 1px solid rgba(255,255,255,0.08);
+# #     backdrop-filter: blur(6px) saturate(120%);
+# #     -webkit-backdrop-filter: blur(6px);
+# #     display: flex;
+# #     flex-direction: column;
+# #     align-items: center;
+# #     justify-content: center;
+# #     position: relative;
+# #     overflow: hidden;
+# # }}
 
 # .snow-bg {{
 #     pointer-events:none;
@@ -402,7 +447,7 @@ bottom_rej_cum = format_inr(rej_cum)
 
 # .value-orange, .value-blue {{
 #     font-size:54px!important;
-#     font-family:'Poppins','Segoe UI',Arial,sans-serif;
+#     font-family:'Fredoka',sans-serif !important;
 #     font-weight:900!important;
 #     letter-spacing:0.03em;
 #     text-align:center;
@@ -417,6 +462,7 @@ bottom_rej_cum = format_inr(rej_cum)
 #     white-space:nowrap;
 #     width:100%;
 # }}
+
 # .value-orange {{
 #     background-image:linear-gradient(90deg,#ffd98a 0%,#fc7d1b 58%,#ffc473 100%);
 #     text-shadow:0 2px 0 #fff,0 6px 16px #fc7d1b,
@@ -444,7 +490,7 @@ bottom_rej_cum = format_inr(rej_cum)
 # .value-green {{
 #     font-size:56px!important;
 #     font-weight:900!important;
-#     font-family:'Poppins','Segoe UI',Arial,sans-serif;
+#     font-family:'Fredoka',sans-serif !important;
 #     background:linear-gradient(90deg,#aef9e2 0%,#00df6c 60%,#50e2ad 100%);
 #     -webkit-background-clip:text!important;
 #     background-clip:text!important;
@@ -462,21 +508,12 @@ bottom_rej_cum = format_inr(rej_cum)
 #     text-align:center;
 #     margin-bottom:4px;
 # }}
-# @keyframes popval {{
-#   0%{{opacity:0;transform:translateY(14px) scale(.93);}}
-#   55%{{opacity:1;transform:translateY(-3px)scale(1.10);}}
-#   85%{{transform:translateY(1px)scale(1.04);}}
-#   100%{{opacity:1;transform:translateY(0)scale(1);}}
-# }}
-# @keyframes shimmer {{
-#     0%{{background-position:-200% center;}}
-#     100%{{background-position:200% center;}}
-# }}
 
 # .title-black {{
 #     color:#f7f5fa!important;
 #     font-size:17px!important;
 #     font-weight:800!important;
+#     font-family:'Fredoka',sans-serif !important;
 #     margin-top:7px!important;
 #     width:100%;
 #     text-align:center!important;
@@ -486,6 +523,7 @@ bottom_rej_cum = format_inr(rej_cum)
 #     color: #003!important;
 #     font-size:16px!important;
 #     font-weight:700!important;
+#     font-family:'Fredoka',sans-serif !important;
 #     margin-bottom:3px!important;
 #     width:100%;
 #     text-align:left!important;
@@ -513,118 +551,104 @@ bottom_rej_cum = format_inr(rej_cum)
 # }}
 # </style>
 # </head>
+
 # <body>
 # <div class="container">
 
 # <!-- ===== TOP ROW CARDS ===== -->
 
-#     <!-- Yesterday's Sale -->
-#     <div class="card top-card">
-#       <canvas class="snow-bg" id="snowsale"></canvas>
-#       <div class="center-content">
-#         <div class="value-blue" style="font-size:42px!important;" id="salevalue">₹ {top_today_sale}</div>
-#         <div class="title-black">Yesterday's Sale</div>
-#       </div>
-#     </div>
+# <div class="card top-card">
+#   <canvas class="snow-bg" id="snowsale"></canvas>
+#   <div class="center-content">
+#     <div class="value-blue" style="font-size:42px!important;" id="salevalue">₹ {top_today_sale}</div>
+#     <div class="title-black">Yesterday's Sale</div>
+#   </div>
+# </div>
 
-#     <!-- UPDATED: REJECTION AMOUNT BOX -->
-#     <div class="card">
-#       <canvas class="snow-bg" id="snowrej"></canvas>
-#       <div class="center-content">
-#         <div class="value-orange" style="font-size:42px!important;" id="rejamtvalue">₹ {left_rej_amt}</div>
-#         <div class="title-black">Rejection Amount</div>
-#       </div>
-#     </div>
+# <div class="card">
+#   <canvas class="snow-bg" id="snowrej"></canvas>
+#   <div class="center-content">
+#     <div class="value-orange" style="font-size:42px!important;" id="rejamtvalue">₹ {left_rej_amt}</div>
+#     <div class="title-black">Rejection Amount</div>
+#   </div>
+# </div>
 
-#     <!-- OEE -->
-#     <div class="card top-card">
-#       <canvas class="snow-bg" id="snowoee"></canvas>
-#       <div class="center-content">
-#         <div class="value-blue" style="font-size:42px!important;" id="oeevalue">{top_oee}</div>
-#         <div class="title-black">OEE %</div>
-#       </div>
-#     </div>
+# <div class="card top-card">
+#   <canvas class="snow-bg" id="snowoee"></canvas>
+#   <div class="center-content">
+#     <div class="value-blue" style="font-size:42px!important;" id="oeevalue">{top_oee}</div>
+#     <div class="title-black">OEE %</div>
+#   </div>
+# </div>
 
+# <!-- ===== SECOND ROW ===== -->
 
-#     <!-- ===== SECOND ROW ===== -->
+# <div class="card">
+#   <canvas class="snow-bg" id="snowspeed"></canvas>
+#   {gauge_html}
+# </div>
 
-#     <!-- Speedometer -->
-#     <div class="card">
-#       <canvas class="snow-bg" id="snowspeed"></canvas>
-#       {gauge_html}
-#     </div>
+# <div class="card">
+#   <canvas class="snow-bg" id="snowach"></canvas>
+#   <div class="center-content">
+#     <div class="value-orange" style="font-size:42px!important;" id="rejpctvalue">{left_rej_pct}</div>
+#     <div class="title-black">Rejection %</div>
+#   </div>
+# </div>
 
-#     <!-- UPDATED: ACHIEVED BOX NOW SHOWS REJECTION % -->
-#     <div class="card">
-#       <canvas class="snow-bg" id="snowach"></canvas>
-#       <div class="center-content">
-#         <div class="value-orange" style="font-size:42px!important;" id="rejpctvalue">{left_rej_pct}</div>
-#         <div class="title-black">Rejection %</div>
-#       </div>
-#     </div>
+# <div class="card top-card">
+#   <canvas class="snow-bg" id="snowcopq"></canvas>
+#   <div class="center-content">
+#     <div class="value-blue" style="font-size:42px!important;">COPQ Pending...</div>
+#   </div>
+# </div>
 
-#     <!-- COPQ Placeholder -->
-#     <div class="card top-card">
-#       <canvas class="snow-bg" id="snowcopq"></canvas>
-#       <div class="center-content">
-#         <div class="value-blue" style="font-size:42px!important;">COPQ Pending...</div>
-#       </div>
-#     </div>
+# <!-- ===== THIRD ROW ===== -->
 
+# <div class="card bottom-card">
+#     <canvas class="snow-bg" id="snowsalechart"></canvas>
+#     <div class="chart-title-black">Sale Trend</div>
+#     <div id="sale_chart_container" class="chart-container">{sale_html}</div>
+# </div>
 
-#     <!-- ===== THIRD ROW (SALE & REJECTION TREND) ===== -->
+# <div class="card bottom-card">
+#     <canvas class="snow-bg" id="snowrejchart"></canvas>
+#     <div class="chart-title-black">Rejection Trend</div>
+#     <div id="rej_chart_container" class="chart-container">{rej_html}</div>
+# </div>
 
-#     <div class="card bottom-card">
-#         <canvas class="snow-bg" id="snowsalechart"></canvas>
-#         <div class="chart-title-black">Sale Trend</div>
-#         <div id="sale_chart_container" class="chart-container">{sale_html}</div>
-#     </div>
+# <div class="card bottom-card">
+#   <canvas class="snow-bg" id="snowrejcum"></canvas>
+#   <div class="center-content">
+#     <div class="value-orange" style="font-size:42px!important;" id="rejcum">{bottom_rej_cum}</div>
+#     <div class="title-black">Rejection (Cumulative)</div>
+#   </div>
+# </div>
 
-#     <div class="card bottom-card">
-#         <canvas class="snow-bg" id="snowrejchart"></canvas>
-#         <div class="chart-title-black">Rejection Trend</div>
-#         <div id="rej_chart_container" class="chart-container">{rej_html}</div>
-#     </div>
+# <!-- ===== FOURTH ROW ===== -->
 
-#     <div class="card bottom-card">
-#       <canvas class="snow-bg" id="snowrejcum"></canvas>
-#       <div class="center-content">
-#         <div class="value-orange" style="font-size:42px!important;" id="rejcum">{bottom_rej_cum}</div>
-#         <div class="title-black">Rejection (Cumulative)</div>
-#       </div>
-#     </div>
+# <div class="card">
+#   <canvas class="snow-bg" id="snowcumsale"></canvas>
+#   <div class="center-content">
+#     <div class="value-blue" style="font-size:42px!important;" id="cumsalevalue">₹ {format_inr(total_cum)}</div>
+#     <div class="title-black">Sale Cumulative</div>
+#   </div>
+# </div>
 
+# <div class="card">
+#   <canvas class="snow-bg" id="snowgap"></canvas>
+#   <div class="center-content">
+#     <div class="value-blue" style="font-size:40px!important;"> ... </div>
+#     <div class="title-black"></div>
+#   </div>
+# </div>
 
-#     <!-- ===== FOURTH ROW (NEW BOXES) ===== -->
-
-#     <!-- NEW BOX: SALE CUMULATIVE -->
-#     <div class="card">
-#       <canvas class="snow-bg" id="snowcumsale"></canvas>
-#       <div class="center-content">
-#         <div class="value-blue" style="font-size:42px!important;" id="cumsalevalue">₹ {format_inr(total_cum)}</div>
-#         <div class="title-black">Sale Cumulative</div>
-#       </div>
-#     </div>
-
-#     <!-- NEW BOX: GAP -->
-
-    
-    
-#     <div class="card">
-#       <canvas class="snow-bg" id="snowgap"></canvas>
-#       <div class="center-content">
-#         <div class="value-blue" style="font-size:40px!important;"> ... </div>
-#         <div class="title-black"></div>
-#       </div>
-#     </div>
-
-#     <!-- EMPTY BOX FOR GRID BALANCE -->
-#     <div class="card">
-#       <canvas class="snow-bg" id="snowempty"></canvas>
-#       <div class="center-content">
-#         <div class="value-blue" style="font-size:32px;">&nbsp;</div>
-#       </div>
-#     </div>
+# <div class="card">
+#   <canvas class="snow-bg" id="snowempty"></canvas>
+#   <div class="center-content">
+#     <div class="value-blue" style="font-size:32px;">&nbsp;</div>
+#   </div>
+# </div>
 
 # </div>
 
@@ -667,9 +691,9 @@ bottom_rej_cum = format_inr(rej_cum)
 # }});
 
 # function animateValue(element, start, end, duration, suffix="", prefix="") {{
-#     if (isNaN(Number(end))) {{ 
-#         element.textContent = prefix + end + suffix; 
-#         return; 
+#     if (isNaN(Number(end))) {{
+#         element.textContent = prefix + end + suffix;
+#         return;
 #     }}
 #     const range = end - start;
 #     let startTime = null;
@@ -678,13 +702,16 @@ bottom_rej_cum = format_inr(rej_cum)
 #         let progress = Math.min((now - startTime) / duration, 1);
 #         let value = Math.floor(start + range * progress);
 #         element.textContent = prefix + value.toLocaleString('en-IN') + suffix;
-#         if (progress < 1) requestAnimationFrame(step);
-#         else element.textContent = prefix + Number(end).toLocaleString('en-IN') + suffix;
+#         if (progress < 1)
+#             requestAnimationFrame(step);
+#         else
+#             element.textContent = prefix + Number(end).toLocaleString('en-IN') + suffix;
 #     }}
 #     requestAnimationFrame(step);
 # }}
 
 # window.addEventListener("DOMContentLoaded", function() {{
+
 #     # animateValue(
 #     #     document.getElementById('salevalue'),
 #     #     0,
@@ -702,7 +729,6 @@ bottom_rej_cum = format_inr(rej_cum)
 #     #     "%"
 #     # );
 
-#     // Rejection amount box
 #     animateValue(
 #         document.getElementById('rejamtvalue'),
 #         0,
@@ -712,7 +738,6 @@ bottom_rej_cum = format_inr(rej_cum)
 #         "₹ "
 #     );
 
-#     // Rejection % box
 #     animateValue(
 #         document.getElementById('rejpctvalue'),
 #         0,
@@ -730,7 +755,6 @@ bottom_rej_cum = format_inr(rej_cum)
 #         "₹ "
 #     );
 
-#     // Sale cumulative
 #     animateValue(
 #         document.getElementById('cumsalevalue'),
 #         0,
@@ -740,7 +764,6 @@ bottom_rej_cum = format_inr(rej_cum)
 #         "₹ "
 #     );
 
-#     // Gap
 #     animateValue(
 #         document.getElementById('gapvalue'),
 #         0,
@@ -749,6 +772,7 @@ bottom_rej_cum = format_inr(rej_cum)
 #         "",
 #         "₹ "
 #     );
+
 # }});
 # </script>
 
@@ -756,477 +780,7 @@ bottom_rej_cum = format_inr(rej_cum)
 # </html>
 # """
 
-# # -------- RENDER UPDATED HTML -------- #
-
 # st.components.v1.html(html_template, height=900, scrolling=True)
-
-######2nd update##################################################################
-
-st.markdown(
-    f"""
-    <style>
-    body, .stApp {{
-        background: url("data:image/jpeg;base64,{bg_b64}") no-repeat center center fixed !important;
-        background-size: cover !important;
-        background-position: center center !important;
-        min-height: 100vh !important;
-        min-width: 100vw !important;
-        width: 100vw !important;
-        height: 100vh !important;
-        overflow: hidden !important;
-        margin: 0 !important;
-        padding: 0 !important;
-    }}
-    .block-container {{
-        padding-top: 0rem !important;
-        padding-bottom: 0rem !important;
-        padding-left: 0rem !important;
-        padding-right: 0rem !important;
-    }}
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
-html_template = f"""
-<!doctype html>
-<html>
-<head>
-<meta charset="utf-8">
-
-<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
-
-<style>
-:root {{
-    --card-radius: 17px;
-    --orange: {BUTTERFLY_ORANGE};
-    --blue: {BLUE};
-    --green: {GREEN};
-}}
-
-body {{
-    margin:0;
-    padding:0;
-    font-family:'Fredoka',sans-serif !important;
-    background: none !important;
-    color:#091128;
-}}
-
-.container {{
-    box-sizing: border-box;
-    width: 100vw;
-    height: 100vh;
-    padding: 5vw;
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    grid-template-rows: 130px 220px 140px 140px;
-    gap: 18px;
-    row-gap: 30px;
-    max-width: 1700px;
-    max-height: 900px;
-    margin: auto;
-}}
-
-.card {{
-    background: rgba(255,255,255,0.10);
-    border-radius: 18px;
-    padding: 0;
-    border: 1px solid rgba(255,255,255,0.25);
-
-    /* Frosted glass */
-    backdrop-filter: blur(8px) saturate(160%);
-    -webkit-backdrop-filter: blur(8px) saturate(160%);
-
-    /* Inner glow */
-    box-shadow:
-        inset 0 0 15px rgba(255,255,255,0.25),
-        inset 0 0 25px rgba(255,255,255,0.15),
-
-        /* Outer neon glow */
-        0 0 12px rgba(255,255,255,0.35),
-        0 0 24px rgba(0,150,255,0.25),
-        0 0 40px rgba(0,150,255,0.18);
-
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    transition: all 0.35s ease;
-}}
-
-/* Hover glow boost */
-.card:hover {{
-    box-shadow:
-        inset 0 0 20px rgba(255,255,255,0.35),
-        inset 0 0 35px rgba(255,255,255,0.25),
-        0 0 16px rgba(255,255,255,0.55),
-        0 0 35px rgba(0,150,255,0.45),
-        0 0 70px rgba(0,150,255,0.35);
-    transform: translateY(-2px);
-}}
-
-# .card {{
-#     background: linear-gradient(184deg,rgba(255,255,255,0.13) 12%,rgba(255,255,255,0.04) 83%);
-#     border-radius: 16px;
-#     box-shadow: 0 6px 18px rgba(4, 8, 15, 0.13);
-#     border: 1px solid rgba(255,255,255,0.08);
-#     backdrop-filter: blur(6px) saturate(120%);
-#     -webkit-backdrop-filter: blur(6px);
-#     display: flex;
-#     flex-direction: column;
-#     align-items: center;
-#     justify-content: center;
-#     position: relative;
-#     overflow: hidden;
-# }}
-
-.snow-bg {{
-    pointer-events:none;
-    position:absolute;
-    left:0; top:0;
-    width:100%; height:100%;
-    z-index:0;
-    opacity:0.50;
-}}
-
-.value-orange, .value-blue {{
-    font-size:54px!important;
-    font-family:'Fredoka',sans-serif !important;
-    font-weight:900!important;
-    letter-spacing:0.03em;
-    text-align:center;
-    position:relative;
-    z-index:2;
-    background-clip:text!important;
-    -webkit-background-clip:text!important;
-    -webkit-text-fill-color:transparent;
-    color:transparent!important;
-    padding:4px 11px;
-    margin:0 auto;
-    white-space:nowrap;
-    width:100%;
-}}
-
-.value-orange {{
-    background-image:linear-gradient(90deg,#ffd98a 0%,#fc7d1b 58%,#ffc473 100%);
-    text-shadow:0 2px 0 #fff,0 6px 16px #fc7d1b,
-                 0 1px 8px #fffbe8,0 12px 38px #fc7d1b;
-    -webkit-text-stroke:1.2px #b96000;
-    filter:drop-shadow(0 4px 18px #fc7d1b);
-    border-radius:10px;
-    animation:popval 1.18s cubic-bezier(0.14,0.86,0.29,1.08) both,
-              shimmer 3.2s linear infinite;
-    background-size:200% 100%;
-}}
-
-.value-blue {{
-    background-image:linear-gradient(89deg,#b9e6ff 0%,#228be6 75%,#79cafc 100%);
-    text-shadow:0 2px 0 #fff,0 0.5px 9px #79cafc,
-                 0 6px 18px #228be6,0 12px 38px #79cafc;
-    -webkit-text-stroke:1.2px #1661a2;
-    filter:drop-shadow(0 4px 18px #228be6);
-    border-radius:10px;
-    animation:popval 1.1s cubic-bezier(0.14,0.86,0.29,1.08) both,
-              shimmer 3.2s linear infinite;
-    background-size:200% 100%;
-}}
-
-.value-green {{
-    font-size:56px!important;
-    font-weight:900!important;
-    font-family:'Fredoka',sans-serif !important;
-    background:linear-gradient(90deg,#aef9e2 0%,#00df6c 60%,#50e2ad 100%);
-    -webkit-background-clip:text!important;
-    background-clip:text!important;
-    -webkit-text-fill-color:transparent;
-    color:transparent!important;
-    text-shadow:0 3px 8px #fffbe8,
-                 0 5px 16px #00df6c,
-                 0 10px 30px #aef9e2;
-    -webkit-text-stroke:1.2px #1a8d56;
-    filter:drop-shadow(0 4px 16px #00df6c);
-    border-radius:10px;
-    animation:popval 1.1s cubic-bezier(.14,.86,.29,1.08) both,
-              shimmer 3.4s linear infinite;
-    background-size:200% 100%;
-    text-align:center;
-    margin-bottom:4px;
-}}
-
-.title-black {{
-    color:#f7f5fa!important;
-    font-size:17px!important;
-    font-weight:800!important;
-    font-family:'Fredoka',sans-serif !important;
-    margin-top:7px!important;
-    width:100%;
-    text-align:center!important;
-}}
-
-.chart-title-black {{
-    color: #003!important;
-    font-size:16px!important;
-    font-weight:700!important;
-    font-family:'Fredoka',sans-serif !important;
-    margin-bottom:3px!important;
-    width:100%;
-    text-align:left!important;
-    padding-left:7px;
-}}
-
-.chart-container {{
-    width:100%;
-    height:110px;
-    overflow:hidden;
-    box-sizing:border-box;
-    margin:0;
-    padding:0;
-    display:block;
-}}
-
-.center-content {{
-    width:100%;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    padding:0;
-    margin:0;
-}}
-</style>
-</head>
-
-<body>
-<div class="container">
-
-<!-- ===== TOP ROW CARDS ===== -->
-
-<div class="card top-card">
-  <canvas class="snow-bg" id="snowsale"></canvas>
-  <div class="center-content">
-    <div class="value-blue" style="font-size:42px!important;" id="salevalue">₹ {top_today_sale}</div>
-    <div class="title-black">Yesterday's Sale</div>
-  </div>
-</div>
-
-<div class="card">
-  <canvas class="snow-bg" id="snowrej"></canvas>
-  <div class="center-content">
-    <div class="value-orange" style="font-size:42px!important;" id="rejamtvalue">₹ {left_rej_amt}</div>
-    <div class="title-black">Rejection Amount</div>
-  </div>
-</div>
-
-<div class="card top-card">
-  <canvas class="snow-bg" id="snowoee"></canvas>
-  <div class="center-content">
-    <div class="value-blue" style="font-size:42px!important;" id="oeevalue">{top_oee}</div>
-    <div class="title-black">OEE %</div>
-  </div>
-</div>
-
-<!-- ===== SECOND ROW ===== -->
-
-<div class="card">
-  <canvas class="snow-bg" id="snowspeed"></canvas>
-  {gauge_html}
-</div>
-
-<div class="card">
-  <canvas class="snow-bg" id="snowach"></canvas>
-  <div class="center-content">
-    <div class="value-orange" style="font-size:42px!important;" id="rejpctvalue">{left_rej_pct}</div>
-    <div class="title-black">Rejection %</div>
-  </div>
-</div>
-
-<div class="card top-card">
-  <canvas class="snow-bg" id="snowcopq"></canvas>
-  <div class="center-content">
-    <div class="value-blue" style="font-size:42px!important;">COPQ Pending...</div>
-  </div>
-</div>
-
-<!-- ===== THIRD ROW ===== -->
-
-<div class="card bottom-card">
-    <canvas class="snow-bg" id="snowsalechart"></canvas>
-    <div class="chart-title-black">Sale Trend</div>
-    <div id="sale_chart_container" class="chart-container">{sale_html}</div>
-</div>
-
-<div class="card bottom-card">
-    <canvas class="snow-bg" id="snowrejchart"></canvas>
-    <div class="chart-title-black">Rejection Trend</div>
-    <div id="rej_chart_container" class="chart-container">{rej_html}</div>
-</div>
-
-<div class="card bottom-card">
-  <canvas class="snow-bg" id="snowrejcum"></canvas>
-  <div class="center-content">
-    <div class="value-orange" style="font-size:42px!important;" id="rejcum">{bottom_rej_cum}</div>
-    <div class="title-black">Rejection (Cumulative)</div>
-  </div>
-</div>
-
-<!-- ===== FOURTH ROW ===== -->
-
-<div class="card">
-  <canvas class="snow-bg" id="snowcumsale"></canvas>
-  <div class="center-content">
-    <div class="value-blue" style="font-size:42px!important;" id="cumsalevalue">₹ {format_inr(total_cum)}</div>
-    <div class="title-black">Sale Cumulative</div>
-  </div>
-</div>
-
-<div class="card">
-  <canvas class="snow-bg" id="snowgap"></canvas>
-  <div class="center-content">
-    <div class="value-blue" style="font-size:40px!important;"> ... </div>
-    <div class="title-black"></div>
-  </div>
-</div>
-
-<div class="card">
-  <canvas class="snow-bg" id="snowempty"></canvas>
-  <div class="center-content">
-    <div class="value-blue" style="font-size:32px;">&nbsp;</div>
-  </div>
-</div>
-
-</div>
-
-<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-
-<script>
-function makeSnow(canvas) {{
-    if (!canvas) return;
-    var ctx = canvas.getContext('2d');
-    var w = canvas.width = canvas.offsetWidth,
-        h = canvas.height = canvas.offsetHeight;
-    var sn = [];
-    for(var i=0;i<36;i++)
-        sn.push({{x:Math.random()*w,y:Math.random()*h,r:1.4+Math.random()*2,dx:0,dy:1+Math.random()*1.6}});
-    function loop(){{
-        ctx.clearRect(0,0,w,h);
-        for(var i=0;i<sn.length;i++) {{
-            ctx.beginPath();
-            ctx.arc(sn[i].x,sn[i].y,sn[i].r,0,2*Math.PI);
-            ctx.fillStyle="rgba(255,255,255,0.65)";
-            ctx.fill();
-            sn[i].x += sn[i].dx*(0.4+Math.random()*0.7);
-            sn[i].y += sn[i].dy;
-            if(sn[i].y>h){{ sn[i].y=0; sn[i].x=Math.random()*w; }}
-            if(sn[i].x>w){{ sn[i].x=0; }}
-        }}
-        requestAnimationFrame(loop);
-    }}
-    loop();
-}}
-
-window.addEventListener("DOMContentLoaded",function() {{
-    [
-      "snowdate","snowsale","snowoee","snowrej","snowach","snowrejcum",
-      "snowspeed","snowsalechart","snowrejchart","snowcumsale","snowgap","snowempty"
-    ].forEach(function(id){{
-        var el=document.getElementById(id);
-        if(el) setTimeout(function(){{makeSnow(el)}},120);
-    }});
-}});
-
-function animateValue(element, start, end, duration, suffix="", prefix="") {{
-    if (isNaN(Number(end))) {{
-        element.textContent = prefix + end + suffix;
-        return;
-    }}
-    const range = end - start;
-    let startTime = null;
-    function step(now) {{
-        if (!startTime) startTime = now;
-        let progress = Math.min((now - startTime) / duration, 1);
-        let value = Math.floor(start + range * progress);
-        element.textContent = prefix + value.toLocaleString('en-IN') + suffix;
-        if (progress < 1)
-            requestAnimationFrame(step);
-        else
-            element.textContent = prefix + Number(end).toLocaleString('en-IN') + suffix;
-    }}
-    requestAnimationFrame(step);
-}}
-
-window.addEventListener("DOMContentLoaded", function() {{
-
-    # animateValue(
-    #     document.getElementById('salevalue'),
-    #     0,
-    #     parseInt("{top_today_sale.replace(',', '')}"),
-    #     1100,
-    #     "",
-    #     "₹ "
-    # );
-
-    # animateValue(
-    #     document.getElementById('oeevalue'),
-    #     0,
-    #     parseFloat("{top_oee.replace('%', '')}"),
-    #     1100,
-    #     "%"
-    # );
-
-    animateValue(
-        document.getElementById('rejamtvalue'),
-        0,
-        parseInt("{left_rej_amt.replace(',', '')}"),
-        1100,
-        "",
-        "₹ "
-    );
-
-    animateValue(
-        document.getElementById('rejpctvalue'),
-        0,
-        parseFloat("{left_rej_pct.replace('%', '')}"),
-        1100,
-        "%"
-    );
-
-    animateValue(
-        document.getElementById('rejcum'),
-        0,
-        parseInt("{bottom_rej_cum.replace(',', '')}"),
-        1100,
-        "",
-        "₹ "
-    );
-
-    animateValue(
-        document.getElementById('cumsalevalue'),
-        0,
-        parseInt("{format_inr(total_cum).replace(',', '')}"),
-        1100,
-        "",
-        "₹ "
-    );
-
-    animateValue(
-        document.getElementById('gapvalue'),
-        0,
-        parseInt("{format_inr(TARGET_SALE - total_cum).replace(',', '')}"),
-        1100,
-        "",
-        "₹ "
-    );
-
-}});
-</script>
-
-</body>
-</html>
-"""
-
-st.components.v1.html(html_template, height=900, scrolling=True)
 
 
 #################################################################
@@ -2086,6 +1640,7 @@ st.components.v1.html(html_template, height=900, scrolling=True)
 # """
 
 # st.components.v1.html(html_template, height=770, scrolling=True)
+
 
 
 
