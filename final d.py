@@ -415,7 +415,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-html_template = f"""
+html_template = """
 <!doctype html>
 <html>
 <head>
@@ -1428,6 +1428,7 @@ st.components.v1.html(html_template, height=900, scrolling=True)
 # """
 
 # st.components.v1.html(html_template, height=770, scrolling=True)
+
 
 
 
