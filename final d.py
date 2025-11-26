@@ -375,40 +375,19 @@ body {{
 }}
 
 /* CARD STYLE (unchanged, glowing, blur glass) */
-# .card {{
-#     background: linear-gradient(184deg,rgba(255,255,255,0.13) 12%,rgba(255,255,255,0.04) 83%);
-#     border-radius: 16px;
-#     box-shadow: 0 6px 18px rgba(4, 8, 15, 0.13);
-#     border: 1px solid rgba(255,255,255,0.08);
-#     backdrop-filter: blur(6px) saturate(120%);
-#     -webkit-backdrop-filter: blur(6px);
-#     display: flex;
-#     flex-direction: column;
-#     align-items: center;
-#     justify-content: center;
-#     position: relative;
-#     overflow: hidden;
-# }}
-
 .card {{
-    background: rgba(255,255,255,0.12);
+    background: linear-gradient(184deg,rgba(255,255,255,0.13) 12%,rgba(255,255,255,0.04) 83%);
     border-radius: 16px;
-    border: 1px solid rgba(255,255,255,0.18);
-    backdrop-filter: blur(10px) saturate(150%);
-    -webkit-backdrop-filter: blur(10px) saturate(150%);
-
-    box-shadow:
-        0 4px 14px rgba(0,0,0,0.22),
-        0 0 12px rgba(255,255,255,0.25);
-
-    transition: 0.25s ease-in-out;
-}}
-
-.card:hover {{
-    box-shadow:
-        0 6px 20px rgba(0,0,0,0.28),
-        0 0 18px rgba(255,255,255,0.32);
-    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(4, 8, 15, 0.13);
+    border: 1px solid rgba(255,255,255,0.08);
+    backdrop-filter: blur(6px) saturate(120%);
+    -webkit-backdrop-filter: blur(6px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
 }}
 
 .snow-bg {{
@@ -1371,6 +1350,7 @@ st.components.v1.html(html_template, height=900, scrolling=True)
 # """
 
 # st.components.v1.html(html_template, height=770, scrolling=True)
+
 
 
 
