@@ -505,17 +505,16 @@ body {{
     </div>
 </div>
 
-<div class="card">
-    <canvas class="snow-bg" id="snowcopq"></canvas>
-    <div class="center-content">
-        <div class="value-blue">₹ {copq_display}</div>
-        <div class="title-black">COPQ Pending</div>
-    </div>
-</div>
 
 <div class="card">
     <canvas class="snow-bg" id="snowspeed"></canvas>
     {gauge_html}
+</div>
+
+<div class="card">
+    <canvas class="snow-bg" id="snowsalechart"></canvas>
+    <div class="chart-title-black">Sale Trend</div>
+    <div id="sale_chart_container" class="chart-container">{sale_html}</div>
 </div>
 
 <div class="card">
@@ -524,11 +523,18 @@ body {{
     <div id="rej_chart_container" class="chart-container">{rej_html}</div>
 </div>
 
+
 <div class="card">
-    <canvas class="snow-bg" id="snowsalechart"></canvas>
-    <div class="chart-title-black">Sale Trend</div>
-    <div id="sale_chart_container" class="chart-container">{sale_html}</div>
+    <canvas class="snow-bg" id="snowcopq"></canvas>
+    <div class="center-content">
+        <div class="value-blue">₹ {copq_display}</div>
+        <div class="title-black">COPQ Pending</div>
+    </div>
 </div>
+
+
+
+
 
 <div class="card">
     <canvas class="snow-bg" id="snowgap"></canvas>
@@ -560,5 +566,6 @@ body {{
 """
 
 st.components.v1.html(html_template, height=900, scrolling=True)
+
 
 
