@@ -527,6 +527,11 @@ body {{
     <div id="rej_chart_container" class="chart-container">{rej_html}</div>
 </div>
 
+<div class="card">
+    <canvas class="snow-bg" id="snowspeed"></canvas>
+    {gauge_html}
+</div>
+
 
 <div class="card">
     <canvas class="snow-bg" id="snowgap"></canvas>
@@ -536,10 +541,6 @@ body {{
     </div>
 </div>
 
-<div class="card">
-    <canvas class="snow-bg" id="snowspeed"></canvas>
-    {gauge_html}
-</div>
 
 
 <div class="card">
@@ -564,5 +565,6 @@ body {{
 """
 
 st.components.v1.html(html_template, height=900, scrolling=True)
+
 
 
