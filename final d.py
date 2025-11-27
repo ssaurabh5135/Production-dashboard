@@ -1,4 +1,4 @@
-import streamlit as st
+    import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 import plotly.colors as pc
@@ -513,10 +513,13 @@ body {{
     </div>
 </div>
 
+
 <div class="card">
-    <canvas class="snow-bg" id="snowspeed"></canvas>
-    {gauge_html}
+    <canvas class="snow-bg" id="snowsalechart"></canvas>
+    <div class="chart-title-black">Sale Trend</div>
+    <div id="sale_chart_container" class="chart-container">{sale_html}</div>
 </div>
+
 
 <div class="card">
     <canvas class="snow-bg" id="snowrejchart"></canvas>
@@ -524,11 +527,6 @@ body {{
     <div id="rej_chart_container" class="chart-container">{rej_html}</div>
 </div>
 
-<div class="card">
-    <canvas class="snow-bg" id="snowsalechart"></canvas>
-    <div class="chart-title-black">Sale Trend</div>
-    <div id="sale_chart_container" class="chart-container">{sale_html}</div>
-</div>
 
 <div class="card">
     <canvas class="snow-bg" id="snowgap"></canvas>
@@ -537,6 +535,12 @@ body {{
         <div class="title-black">COPQ (Cumulative)</div>
     </div>
 </div>
+
+<div class="card">
+    <canvas class="snow-bg" id="snowspeed"></canvas>
+    {gauge_html}
+</div>
+
 
 <div class="card">
     <canvas class="snow-bg" id="snowrejcum"></canvas>
@@ -560,3 +564,4 @@ body {{
 """
 
 st.components.v1.html(html_template, height=900, scrolling=True)
+
