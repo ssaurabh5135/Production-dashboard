@@ -599,7 +599,7 @@ body {{
         <canvas class="snow-bg" id="snowcopqcum"></canvas>
         <div class="center-content">
             <div class="value-blue">₹ {copq_cum_display}</div>
-            <div class="title-black">COPQ (Cumulative)</div>
+            <div class="title-black">COPQ Cumulative</div>
         </div>
     </div>
 
@@ -1198,6 +1198,7 @@ st.components.v1.html(html_template, height=900, scrolling=True)
 # """
 
 # st.components.v1.html(html_template, height=900, scrolling=True)
+
 
 
 
