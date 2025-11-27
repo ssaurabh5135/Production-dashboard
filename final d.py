@@ -493,9 +493,9 @@ body {{
 .chart-container {{
     width: 100%;
     height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: block;
+    padding:25px 5px 5px 5px;
+    box-sizing: border-box;
 }}
 
 .snow-bg {{
@@ -1198,6 +1198,7 @@ st.components.v1.html(html_template, height=900, scrolling=True)
 # """
 
 # st.components.v1.html(html_template, height=900, scrolling=True)
+
 
 
 
