@@ -322,7 +322,7 @@ fig_rej.add_trace(
 fig_rej.add_trace(
     go.Scatter(
         x=rej_df["date"],
-        y=rej_df["rej_k"],
+        y=rej_df["rej_lakh"],
         mode="lines",
         line=dict(
             width=15,
@@ -1198,6 +1198,7 @@ st.components.v1.html(html_template, height=900, scrolling=True)
 # """
 
 # st.components.v1.html(html_template, height=900, scrolling=True)
+
 
 
 
