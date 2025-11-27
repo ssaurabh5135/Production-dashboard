@@ -532,17 +532,13 @@ body {{
     </div>
 </div>
 
-
-
-
-
 <div class="card">
-    <canvas class="snow-bg" id="snowgap"></canvas>
+    <canvas class="snow-bg" id="snowempty"></canvas>
     <div class="center-content">
-        <div class="value-blue">₹ {copq_cum_display}</div>
-        <div class="title-black">COPQ (Cumulative)</div>
+        <div class="value-blue">&nbsp;</div>
     </div>
 </div>
+
 
 <div class="card">
     <canvas class="snow-bg" id="snowrejcum"></canvas>
@@ -553,9 +549,10 @@ body {{
 </div>
 
 <div class="card">
-    <canvas class="snow-bg" id="snowempty"></canvas>
+    <canvas class="snow-bg" id="snowgap"></canvas>
     <div class="center-content">
-        <div class="value-blue">&nbsp;</div>
+        <div class="value-blue">₹ {copq_cum_display}</div>
+        <div class="title-black">COPQ (Cumulative)</div>
     </div>
 </div>
 
