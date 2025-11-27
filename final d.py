@@ -578,7 +578,7 @@ body {{
         <canvas class="snow-bg" id="snowcopq"></canvas>
         <div class="center-content">
             <div class="value-blue">₹ {copq_display}</div>
-            <div class="title-black">COPQ Pending</div>
+            <div class="title-black">COPQ Last Day</div>
         </div>
     </div>
 
@@ -1198,6 +1198,7 @@ st.components.v1.html(html_template, height=900, scrolling=True)
 # """
 
 # st.components.v1.html(html_template, height=900, scrolling=True)
+
 
 
 
