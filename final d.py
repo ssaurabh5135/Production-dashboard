@@ -1,4 +1,4 @@
-    import streamlit as st
+import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 import plotly.colors as pc
@@ -564,4 +564,5 @@ body {{
 """
 
 st.components.v1.html(html_template, height=900, scrolling=True)
+
 
