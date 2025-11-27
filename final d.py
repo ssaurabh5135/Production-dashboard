@@ -13,7 +13,9 @@ IMAGE_PATH = "black.jpg"
 SPREADSHEET_ID = "168UoOWdTfOBxBvy_4QGymfiIRimSO2OoJdnzBDRPLvk"
 DASHBOARD_SHEET = "Dashboard"
 SALES_REPORT_SHEET = "Sales Report"
-TARGET_SALE = 19_92_00_000
+TARGET_SALE = 19_92_00_000 # yearly target in ₹
+
+# ---------- Helpers ----------
 
 def load_image_base64(path: str) -> str:
     try:
@@ -44,12 +46,27 @@ def ensure_pct(x):
     return v * 100 if v <= 5 else v
 
 def find_col(df, target):
-    norm_target = target.lower().replace(" ", "").replace("%", "").replace("(", "").replace(")", "")
+    """Find column ignoring case, spaces, %, brackets."""
+    norm_target = (
+        target.lower()
+        .replace(" ", "")
+        .replace("%", "")
+        .replace("(", "")
+        .replace(")", "")
+    )
     for c in df.columns:
-        norm_c = str(c).lower().replace(" ", "").replace("%", "").replace("(", "").replace(")", "")
+        norm_c = (
+            str(c).lower()
+            .replace(" ", "")
+            .replace("%", "")
+            .replace("(", "")
+            .replace(")", "")
+        )
         if norm_c == norm_target:
             return c
     return None
+
+# ---------- Auth & Dashboard ----------
 
 try:
     creds_info = st.secrets["gcp_service_account"]
@@ -96,7 +113,7 @@ rej_cum_col = find_col(df, "rejection amount (cumulative)") or find_col(df, "rej
 total_cum_col = find_col(df, "total sales (cumulative)") or find_col(df, "total sales cumulative")
 
 if not all([date_col, today_col, oee_col, plan_col, rej_day_col, rej_pct_col, rej_cum_col, total_cum_col]):
-    st.error("One or more required dashboard columns are missing.")
+    st.error("One or more required dashboard columns are missing in Google Sheet.")
     st.stop()
 
 copq_col = find_col(df, "copq")
@@ -138,6 +155,8 @@ else:
 BUTTERFLY_ORANGE = "#fc7d1b"
 BLUE = "#228be6"
 GREEN = "#009e4f"
+
+# ---------- Gauge ----------
 
 gauge = go.Figure(
     go.Indicator(
@@ -183,6 +202,8 @@ gauge.update_layout(
 )
 
 gauge_html = gauge.to_html(include_plotlyjs="cdn", full_html=False)
+
+# ---------- Sales Report for Trends ----------
 
 try:
     sr_ws = sh.worksheet(SALES_REPORT_SHEET)
@@ -231,6 +252,10 @@ rej_df["rej amt"] = pd.to_numeric(
 ).fillna(0)
 rej_df = rej_df.dropna(subset=["date"]).sort_values("date")
 
+# ---------- SALE TREND GRAPH (Lakhs, all days) ----------
+
+sale_df["sale_lakh"] = sale_df["sale amount"] / 100000.0
+
 bar_gradients = pc.n_colors(
     "rgb(34,139,230)",
     "rgb(79,223,253)",
@@ -242,10 +267,11 @@ fig_sale = go.Figure()
 fig_sale.add_trace(
     go.Bar(
         x=sale_df["date"],
-        y=sale_df["sale amount"],
+        y=sale_df["sale_lakh"],
         marker_color=bar_gradients,
         marker_line_width=0,
         opacity=0.97,
+        hovertemplate="Date: %{x|%d-%b}<br>Sale: %{y:.2f} Lakh<extra></extra>",
     )
 )
 
@@ -259,16 +285,27 @@ fig_sale.update_layout(
         tickfont=dict(size=10),
         tickangle=-45,
         automargin=True,
+        tickformat="%d", # show only day number
+        dtick="D1", # every day visible
     ),
-    yaxis=dict(showgrid=False, tickfont=dict(size=10), automargin=True),
+    yaxis=dict(
+        showgrid=False,
+        tickfont=dict(size=10),
+        automargin=True,
+        title="Lakh",
+    ),
 )
+
+# ---------- REJECTION TREND GRAPH (Lakhs, all days) ----------
+
+rej_df["rej_lakh"] = rej_df["rej amt"] / 100000.0
 
 fig_rej = go.Figure()
 
 fig_rej.add_trace(
     go.Scatter(
         x=rej_df["date"],
-        y=rej_df["rej amt"],
+        y=rej_df["rej_lakh"],
         mode="lines+markers",
         marker=dict(
             size=8,
@@ -278,13 +315,14 @@ fig_rej.add_trace(
         line=dict(width=5, color=BUTTERFLY_ORANGE, shape="spline"),
         hoverinfo="x+y",
         opacity=1,
+        hovertemplate="Date: %{x|%d-%b}<br>Rejection: %{y:.2f} Lakh<extra></extra>",
     )
 )
 
 fig_rej.add_trace(
     go.Scatter(
         x=rej_df["date"],
-        y=rej_df["rej amt"],
+        y=rej_df["rej_lakh"],
         mode="lines",
         line=dict(
             width=15,
@@ -307,8 +345,15 @@ fig_rej.update_layout(
         tickfont=dict(size=10),
         tickangle=-45,
         automargin=True,
+        tickformat="%d",
+        dtick="D1",
     ),
-    yaxis=dict(showgrid=False, tickfont=dict(size=10), automargin=True),
+    yaxis=dict(
+        showgrid=False,
+        tickfont=dict(size=10),
+        automargin=True,
+        title="Lakh",
+    ),
 )
 
 sale_html = fig_sale.to_html(include_plotlyjs="cdn", full_html=False)
@@ -322,6 +367,8 @@ left_rej_amt = format_inr(rej_day_amount)
 left_rej_pct = f"{rej_pct:.1f}%"
 bottom_rej_cum = format_inr(rej_cum)
 total_cum_disp = format_inr(total_cum)
+
+# ---------- Streamlit + HTML ----------
 
 st.markdown(
     f"""
@@ -485,6 +532,7 @@ body {{
 
 <div class="container">
 
+    <!-- Row 1 -->
     <div class="card">
         <canvas class="snow-bg" id="snowsale"></canvas>
         <div class="center-content">
@@ -509,6 +557,7 @@ body {{
         </div>
     </div>
 
+    <!-- Row 2 -->
     <div class="card">
         <canvas class="snow-bg" id="snowcumsale"></canvas>
         <div class="center-content">
@@ -533,6 +582,7 @@ body {{
         </div>
     </div>
 
+    <!-- Row 3: Sale Trend, Rejection Trend, COPQ Cumulative -->
     <div class="card">
         <canvas class="snow-bg" id="snowsalechart"></canvas>
         <div class="chart-title-black">Sale Trend</div>
@@ -553,6 +603,7 @@ body {{
         </div>
     </div>
 
+    <!-- Row 4: Gauge below Sale Trend -->
     <div class="card">
         <canvas class="snow-bg" id="snowspeed"></canvas>
         <div class="gauge-wrapper">{gauge_html}</div>
@@ -580,8 +631,6 @@ body {{
 """
 
 st.components.v1.html(html_template, height=900, scrolling=True)
-
-
 
 
 # import streamlit as st
@@ -1149,6 +1198,7 @@ st.components.v1.html(html_template, height=900, scrolling=True)
 # """
 
 # st.components.v1.html(html_template, height=900, scrolling=True)
+
 
 
 
