@@ -298,14 +298,14 @@ fig_sale.update_layout(
 
 # ---------- REJECTION TREND GRAPH (Lakhs, all days) ----------
 
-rej_df["rej_lakh"] = rej_df["rej amt"] / 100000.0
+rej_df["rej_lakh"] = rej_df["rej amt"] / 1000.0
 
 fig_rej = go.Figure()
 
 fig_rej.add_trace(
     go.Scatter(
         x=rej_df["date"],
-        y=rej_df["rej_lakh"],
+        y=rej_df["rej_k"],
         mode="lines+markers",
         marker=dict(
             size=8,
@@ -315,14 +315,14 @@ fig_rej.add_trace(
         line=dict(width=5, color=BUTTERFLY_ORANGE, shape="spline"),
         hoverinfo="x+y",
         opacity=1,
-        hovertemplate="Date: %{x|%d-%b}<br>Rejection: %{y:.2f} Lakh<extra></extra>",
+        hovertemplate="Date: %{x|%d-%b}<br>Rejection: %{y:.2f} K<extra></extra>",
     )
 )
 
 fig_rej.add_trace(
     go.Scatter(
         x=rej_df["date"],
-        y=rej_df["rej_lakh"],
+        y=rej_df["rej_k"],
         mode="lines",
         line=dict(
             width=15,
@@ -352,7 +352,7 @@ fig_rej.update_layout(
         showgrid=False,
         tickfont=dict(size=10),
         automargin=True,
-        title="Lakh",
+        title="K",
     ),
 )
 
@@ -613,7 +613,7 @@ body {{
         <canvas class="snow-bg" id="snowrejcum"></canvas>
         <div class="center-content">
             <div class="value-orange">{bottom_rej_cum}</div>
-            <div class="title-black">Rejection (Cumulative)</div>
+            <div class="title-black">Rejection Cumulative</div>
         </div>
     </div>
 
@@ -1198,6 +1198,7 @@ st.components.v1.html(html_template, height=900, scrolling=True)
 # """
 
 # st.components.v1.html(html_template, height=900, scrolling=True)
+
 
 
 
