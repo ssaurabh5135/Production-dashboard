@@ -126,7 +126,7 @@ for c in df.columns:
 
 df = df.dropna(subset=[date_col]).sort_values(date_col)
 
-# ---------- Month selector (fixed top-right, no card movement) ----------
+# ---------- Month selector data ----------
 
 df["year_month"] = df[date_col].dt.to_period("M")
 unique_periods = sorted(df["year_month"].unique().tolist())
@@ -137,43 +137,107 @@ else:
 
 label_map = {p: p.strftime("%b %Y") for p in unique_periods}
 
-# Small label box in top-right
+# ---------- GLOBAL BACKGROUND CSS (NO top padding change) ----------
+
+bg_b64 = load_image_base64(IMAGE_PATH)
+
 st.markdown(
-    """
-    <div style="
+    f"""
+    <style>
+    body, .stApp {{
+        background: url("data:image/jpeg;base64,{bg_b64}") no-repeat center center fixed !important;
+        background-size: cover !important;
+        background-position: center center !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+    }}
+    .block-container {{
+        padding: 0 !important;
+        margin: 0 !important;
+    }}
+    /* advanced pill-style month button container */
+    .month-pill {{
         position: fixed;
         top: 10px;
         right: 40px;
         z-index: 9999;
-        background: rgba(0,0,0,0.45);
-        padding: 4px 10px;
-        border-radius: 8px;
+        padding: 6px 14px;
+        border-radius: 999px;
+        background: linear-gradient(135deg, #2b5876, #4e4376);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+        display: flex;
+        align-items: center;
+        gap: 8px;
         color: #ffffff;
-        font-family: 'Fredoka', sans-serif;
+        font-family: "Fredoka", sans-serif;
         font-size: 13px;
-    ">
-        Month
-    </div>
+        border: 1px solid rgba(255,255,255,0.25);
+    }}
+    .month-pill-label {{
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+    }}
+    .month-pill-icon {{
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: radial-gradient(circle at 30% 30%, #ffe29f, #ffa751 55%, #e73827);
+        box-shadow: 0 0 8px rgba(255,180,0,0.9);
+    }}
+    /* shrink the internal streamlit selectbox so it fits nicely inside pill */
+    .month-pill .stSelectbox > div {{
+        padding: 0;
+    }}
+    .month-pill .stSelectbox label {{
+        display: none;
+    }}
+    .month-pill .stSelectbox div[data-baseweb="select"] {{
+        background: transparent;
+        border: none;
+        box-shadow: none;
+        color: #ffffff;
+        font-size: 13px;
+        padding-left: 0;
+    }}
+    .month-pill .stSelectbox svg {{
+        fill: #ffffff;
+    }}
+    </style>
     """,
     unsafe_allow_html=True,
 )
 
-# Empty label so Streamlit selectbox appears just under the small box, but does not move cards
-st.write("")
-selected_period = st.selectbox(
-    "",
-    options=unique_periods,
-    index=unique_periods.index(default_period),
-    format_func=lambda p: label_map.get(p, str(p)),
-    key="month_selector",
-)
+# ---------- Render advanced month-pill with selectbox inside ----------
+
+pill_col = st.empty() # placeholder so selectbox stays functional
+
+with pill_col.container():
+    st.markdown(
+        """
+        <div class="month-pill">
+            <div class="month-pill-icon"></div>
+            <div class="month-pill-label">Month</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    # this selectbox renders in default flow but is visually positioned in pill via CSS above
+    selected_period = st.selectbox(
+        "",
+        options=unique_periods,
+        index=unique_periods.index(default_period),
+        format_func=lambda p: label_map.get(p, str(p)),
+        key="month_selector",
+    )
+
+# ---------- Filter to selected month ----------
 
 df_month = df[df["year_month"] == selected_period].copy()
 if df_month.empty:
     st.error("No data for selected month.")
     st.stop()
-
-# ---------- Metrics for selected month ----------
 
 latest = df_month.iloc[-1]
 
@@ -420,8 +484,6 @@ fig_rej.update_layout(
 sale_html = fig_sale.to_html(include_plotlyjs="cdn", full_html=False)
 rej_html = fig_rej.to_html(include_plotlyjs="cdn", full_html=False)
 
-bg_b64 = load_image_base64(IMAGE_PATH)
-
 top_today_sale = format_inr(today_sale)
 top_oee = f"{round(oee if pd.notna(oee) else 0, 1)}%"
 left_rej_amt = format_inr(rej_day_amount)
@@ -429,27 +491,7 @@ left_rej_pct = f"{rej_pct:.1f}%"
 bottom_rej_cum = format_inr(rej_cum)
 total_cum_disp = format_inr(total_cum)
 
-# ---------- Streamlit + HTML ----------
-
-st.markdown(
-    f"""
-    <style>
-    body, .stApp {{
-        background: url("data:image/jpeg;base64,{bg_b64}") no-repeat center center fixed !important;
-        background-size: cover !important;
-        background-position: center center !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        overflow: hidden !important;
-    }}
-    .block-container {{
-        padding: 0 !important;
-        margin: 0 !important;
-    }}
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
+# ---------- HTML LAYOUT FOR CARDS ----------
 
 html_template = f"""
 <!doctype html>
@@ -692,7 +734,6 @@ body {{
 """
 
 st.components.v1.html(html_template, height=900, scrolling=True)
-
 
 # import streamlit as st
 # import pandas as pd
@@ -1327,6 +1368,7 @@ st.components.v1.html(html_template, height=900, scrolling=True)
 # """
 
 # st.components.v1.html(html_template, height=900, scrolling=True)
+
 
 
 
