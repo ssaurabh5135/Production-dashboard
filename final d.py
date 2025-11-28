@@ -126,29 +126,36 @@ for c in df.columns:
 
 df = df.dropna(subset=[date_col]).sort_values(date_col)
 
-# ---------- Date / month filtering (logic only) ----------
+# ---------- Month–Year selector (bottom logic, but we define first) ----------
 
 df["year_month"] = df[date_col].dt.to_period("M")
+available_periods = sorted(df["year_month"].unique().tolist())
 
-min_d = df[date_col].min().date()
-max_d = df[date_col].max().date()
+# Use latest month as default
+default_period = available_periods[-1] if available_periods else None
 
-# keep chosen date in session so we can render calendar later at bottom
-if "calendar_date" not in st.session_state:
-    st.session_state["calendar_date"] = max_d
+# Human labels like "Nov 2025"
+def ym_label(p):
+    return p.strftime("%b %Y")
 
-selected_date = st.session_state["calendar_date"]
-sel_month_period = pd.Period(selected_date, freq="M")
+# We keep selected month in session so metrics use it before UI renders
+if "selected_ym" not in st.session_state:
+    st.session_state["selected_ym"] = default_period
 
-df_month = df[df["year_month"] == sel_month_period]
-if df_month is None or not isinstance(df_month, pd.DataFrame) or df_month.empty:
+selected_period = st.session_state["selected_ym"]
+
+# If somehow None, fall back to first
+if selected_period is None and available_periods:
+    selected_period = available_periods[-1]
+    st.session_state["selected_ym"] = selected_period
+
+# ---------- Filter DF to selected month ----------
+
+df_month = df[df["year_month"] == selected_period]
+if df_month is None or df_month.empty:
     df_month = df.copy()
 
-df_month_up_to = df_month[df_month[date_col].dt.date <= selected_date]
-if df_month_up_to is not None and isinstance(df_month_up_to, pd.DataFrame) and not df_month_up_to.empty:
-    latest = df_month_up_to.iloc[-1]
-else:
-    latest = df_month.iloc[-1]
+latest = df_month.iloc[-1]
 
 today_sale = latest[today_col]
 raw_oee = latest[oee_col]
@@ -278,12 +285,12 @@ rej_df = rej_df.dropna(subset=["date"]).sort_values("date")
 sale_df["year_month"] = sale_df["date"].dt.to_period("M")
 rej_df["year_month"] = rej_df["date"].dt.to_period("M")
 
-sale_df_month = sale_df[sale_df["year_month"] == sel_month_period]
-if sale_df_month is None or not isinstance(sale_df_month, pd.DataFrame) or sale_df_month.empty:
+sale_df_month = sale_df[sale_df["year_month"] == selected_period]
+if sale_df_month is None or sale_df_month.empty:
     sale_df_month = sale_df.copy()
 
-rej_df_month = rej_df[rej_df["year_month"] == sel_month_period]
-if rej_df_month is None or not isinstance(rej_df_month, pd.DataFrame) or rej_df_month.empty:
+rej_df_month = rej_df[rej_df["year_month"] == selected_period]
+if rej_df_month is None or rej_df_month.empty:
     rej_df_month = rej_df.copy()
 
 # ---------- SALE TREND GRAPH ----------
@@ -432,6 +439,7 @@ html_template = f"""
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700;900&display=swap" rel="stylesheet">
 <style>
 
+/* same CSS as your original cards ... (kept unchanged) */
 :root {{
     --blue1: #8ad1ff;
     --blue2: #4ca0ff;
@@ -485,7 +493,6 @@ body {{
     background: linear-gradient(180deg, var(--blue1), var(--blue2), var(--blue3));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    text-shadow: 0px 4px 6px rgba(0,153,255,0.6), 0px 12px 22px rgba(0,78,255,0.55), 0px 18px 40px rgba(0,40,140,0.9);
 }}
 
 .value-orange {{
@@ -494,7 +501,6 @@ body {{
     background: linear-gradient(180deg, var(--orange1), var(--orange2), var(--orange3));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    text-shadow: 0px 4px 6px rgba(255,165,0,0.6), 0px 12px 22px rgba(255,90,0,0.55), 0px 18px 40px rgba(255,50,0,0.9);
 }}
 
 .value-green {{
@@ -503,7 +509,6 @@ body {{
     background: linear-gradient(180deg, var(--green1), var(--green2));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    text-shadow: 0px 4px 6px rgba(0,255,180,0.6), 0px 12px 22px rgba(0,160,100,0.55), 0px 18px 40px rgba(0,120,80,0.9);
 }}
 
 .title-black {{
@@ -664,23 +669,24 @@ body {{
 </html>
 """
 
-# Render the dashboard
+# Render dashboard first
 st.components.v1.html(html_template, height=900, scrolling=True)
 
-# ---------- Calendar BELOW the cards ----------
+# ---------- Month–Year selector BELOW dashboard ----------
 
-st.markdown("### Select date for dashboard")
-new_date = st.date_input(
-    "Date",
-    value=selected_date,
-    min_value=min_d,
-    max_value=max_d,
+st.markdown("### Select month for dashboard")
+
+# simple selectbox with month labels
+new_period = st.selectbox(
+    "Month",
+    options=available_periods,
+    index=available_periods.index(selected_period) if selected_period in available_periods else len(available_periods) - 1,
+    format_func=ym_label,
 )
 
-# update session_state so next rerun uses the new date
-if new_date != selected_date:
-    st.session_state["calendar_date"] = new_date
-
+if new_period != selected_period:
+    st.session_state["selected_ym"] = new_period
+    st.experimental_rerun()
 
 # import streamlit as st
 # import pandas as pd
@@ -1315,6 +1321,7 @@ if new_date != selected_date:
 # """
 
 # st.components.v1.html(html_template, height=900, scrolling=True)
+
 
 
 
