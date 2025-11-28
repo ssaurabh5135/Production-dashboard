@@ -6,7 +6,7 @@ import base64
 from pathlib import Path
 import gspread
 from google.oauth2.service_account import Credentials
-from datetime import datetime
+from datetime import datetime, date
 
 st.set_page_config(page_title="Factory Dashboard (Exact Layout)", layout="wide")
 
@@ -126,120 +126,37 @@ for c in df.columns:
 
 df = df.dropna(subset=[date_col]).sort_values(date_col)
 
-# ---------- Month selector data ----------
+# ---------- Calendar selection (used later inside last card) ----------
 
-df["year_month"] = df[date_col].dt.to_period("M")
-unique_periods = sorted(df["year_month"].unique().tolist())
-if unique_periods:
-    default_period = unique_periods[-1]
-else:
-    default_period = datetime.today().strftime("%Y-%m")
+min_d = df[date_col].min().date()
+max_d = df[date_col].max().date()
+default_d = max_d
 
-label_map = {p: p.strftime("%b %Y") for p in unique_periods}
-
-# ---------- GLOBAL BACKGROUND CSS (NO top padding change) ----------
-
-bg_b64 = load_image_base64(IMAGE_PATH)
-
-st.markdown(
-    f"""
-    <style>
-    body, .stApp {{
-        background: url("data:image/jpeg;base64,{bg_b64}") no-repeat center center fixed !important;
-        background-size: cover !important;
-        background-position: center center !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        overflow: hidden !important;
-    }}
-    .block-container {{
-        padding: 0 !important;
-        margin: 0 !important;
-    }}
-    /* advanced pill-style month button container */
-    .month-pill {{
-        position: fixed;
-        top: 10px;
-        right: 40px;
-        z-index: 9999;
-        padding: 6px 14px;
-        border-radius: 999px;
-        background: linear-gradient(135deg, #2b5876, #4e4376);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.6);
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        color: #ffffff;
-        font-family: "Fredoka", sans-serif;
-        font-size: 13px;
-        border: 1px solid rgba(255,255,255,0.25);
-    }}
-    .month-pill-label {{
-        font-weight: 700;
-        letter-spacing: 0.03em;
-        text-transform: uppercase;
-    }}
-    .month-pill-icon {{
-        width: 18px;
-        height: 18px;
-        border-radius: 50%;
-        background: radial-gradient(circle at 30% 30%, #ffe29f, #ffa751 55%, #e73827);
-        box-shadow: 0 0 8px rgba(255,180,0,0.9);
-    }}
-    /* shrink the internal streamlit selectbox so it fits nicely inside pill */
-    .month-pill .stSelectbox > div {{
-        padding: 0;
-    }}
-    .month-pill .stSelectbox label {{
-        display: none;
-    }}
-    .month-pill .stSelectbox div[data-baseweb="select"] {{
-        background: transparent;
-        border: none;
-        box-shadow: none;
-        color: #ffffff;
-        font-size: 13px;
-        padding-left: 0;
-    }}
-    .month-pill .stSelectbox svg {{
-        fill: #ffffff;
-    }}
-    </style>
-    """,
-    unsafe_allow_html=True,
+# this renders the widget now; visually it will sit in last card via HTML
+selected_date = st.date_input(
+    "Select date for dashboard",
+    value=default_d,
+    min_value=min_d,
+    max_value=max_d,
+    key="calendar_date",
 )
 
-# ---------- Render advanced month-pill with selectbox inside ----------
+# ---------- Filter DF based on selected date's month ----------
 
-pill_col = st.empty() # placeholder so selectbox stays functional
+sel_month_period = pd.Period(selected_date, freq="M")
+df["year_month"] = df[date_col].dt.to_period("M")
 
-with pill_col.container():
-    st.markdown(
-        """
-        <div class="month-pill">
-            <div class="month-pill-icon"></div>
-            <div class="month-pill-label">Month</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-    # this selectbox renders in default flow but is visually positioned in pill via CSS above
-    selected_period = st.selectbox(
-        "",
-        options=unique_periods,
-        index=unique_periods.index(default_period),
-        format_func=lambda p: label_map.get(p, str(p)),
-        key="month_selector",
-    )
-
-# ---------- Filter to selected month ----------
-
-df_month = df[df["year_month"] == selected_period].copy()
+df_month = df[df["year_month"] == sel_month_period].copy()
 if df_month.empty:
-    st.error("No data for selected month.")
-    st.stop()
+    # if no data for that month, fall back to all data
+    df_month = df.copy()
 
-latest = df_month.iloc[-1]
+# for latest point: last date in that month not after selected_date
+df_month_up_to = df_month[df_month[date_col].dt.date <= selected_date]
+if df_month_up_to.empty:
+    latest = df_month.iloc[-1]
+else:
+    latest = df_month_up_to.iloc[-1]
 
 today_sale = latest[today_col]
 raw_oee = latest[oee_col]
@@ -369,8 +286,8 @@ rej_df = rej_df.dropna(subset=["date"]).sort_values("date")
 sale_df["year_month"] = sale_df["date"].dt.to_period("M")
 rej_df["year_month"] = rej_df["date"].dt.to_period("M")
 
-sale_df_month = sale_df[sale_df["year_month"] == selected_period].copy()
-rej_df_month = rej_df[rej_df["year_month"] == selected_period].copy()
+sale_df_month = sale_df[sale_df["year_month"] == sel_month_period].copy()
+rej_df_month = rej_df[rej_df["year_month"] == sel_month_period].copy()
 
 if sale_df_month.empty:
     sale_df_month = sale_df.copy()
@@ -484,6 +401,30 @@ fig_rej.update_layout(
 sale_html = fig_sale.to_html(include_plotlyjs="cdn", full_html=False)
 rej_html = fig_rej.to_html(include_plotlyjs="cdn", full_html=False)
 
+# ---------- Background CSS (cards) ----------
+
+bg_b64 = load_image_base64(IMAGE_PATH)
+
+st.markdown(
+    f"""
+    <style>
+    body, .stApp {{
+        background: url("data:image/jpeg;base64,{bg_b64}") no-repeat center center fixed !important;
+        background-size: cover !important;
+        background-position: center center !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+    }}
+    .block-container {{
+        padding: 0 !important;
+        margin: 0 !important;
+    }}
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 top_today_sale = format_inr(today_sale)
 top_oee = f"{round(oee if pd.notna(oee) else 0, 1)}%"
 left_rej_amt = format_inr(rej_day_amount)
@@ -491,7 +432,7 @@ left_rej_pct = f"{rej_pct:.1f}%"
 bottom_rej_cum = format_inr(rej_cum)
 total_cum_disp = format_inr(total_cum)
 
-# ---------- HTML LAYOUT FOR CARDS ----------
+# ---------- HTML Layout with calendar in last card ----------
 
 html_template = f"""
 <!doctype html>
@@ -720,10 +661,14 @@ body {{
         </div>
     </div>
 
+    <!-- Last card: Calendar info (Streamlit widget already rendered above) -->
     <div class="card">
         <canvas class="snow-bg" id="snowempty"></canvas>
         <div class="center-content">
-            <div class="value-blue">&nbsp;</div>
+            <div class="value-blue" style="font-size:26px !important;">
+                {selected_date.strftime("%d %b %Y")}
+            </div>
+            <div class="title-black">Dashboard as of</div>
         </div>
     </div>
 
@@ -1368,6 +1313,7 @@ st.components.v1.html(html_template, height=900, scrolling=True)
 # """
 
 # st.components.v1.html(html_template, height=900, scrolling=True)
+
 
 
 
