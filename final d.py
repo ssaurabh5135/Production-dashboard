@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
@@ -15,7 +14,6 @@ IMAGE_PATH = "black.jpg"
 SPREADSHEET_ID = "168UoOWdTfOBxBvy_4QGymfiIRimSO2OoJdnzBDRPLvk"
 DASHBOARD_SHEET = "Dashboard"
 SALES_REPORT_SHEET = "Sales Report"
-DEFAULT_TARGET_SALE = 19_92_00_000 # fallback if target not found
 
 # ---------- Helpers ----------
 
@@ -112,16 +110,28 @@ for c in df.columns:
     if c != date_col:
         df[c] = pd.to_numeric(df[c].astype(str).str.replace(",", ""), errors="coerce")
 
-# ---------- Read month–target table (A10:B) ----------
+# ---------- Read month–target table (A10:B...) ----------
 
-# Get all values, then slice from row 10 (index 9)
 all_vals = dash_ws.get_values()
-target_rows = all_vals[9:] # from row 10 down
 
-target_df = pd.DataFrame(target_rows, columns=["Month", "TARGET_SALE"]).dropna(how="all")
-target_df = target_df[target_df["Month"].notna()]
+# rows starting from row 10 (index 9), take only 2 columns
+raw_target_rows = all_vals[9:]
+target_rows = []
+for r in raw_target_rows:
+    if not any(r):
+        continue
+    month_cell = r[0] if len(r) > 0 else ""
+    target_cell = r[1] if len(r) > 1 else ""
+    target_rows.append([month_cell, target_cell])
 
-# Normalize month names for matching, e.g. "Nov" -> 11
+if target_rows:
+    target_df = pd.DataFrame(target_rows, columns=["Month", "TARGET_SALE"])
+else:
+    target_df = pd.DataFrame(columns=["Month", "TARGET_SALE"])
+
+target_df = target_df.dropna(how="all")
+target_df = target_df[target_df["Month"].astype(str).str.strip() != ""]
+
 month_map = {m.lower(): i for i, m in enumerate(
     ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"], start=1
 )}
@@ -137,8 +147,9 @@ target_df["TARGET_SALE"] = pd.to_numeric(
     target_df["TARGET_SALE"].astype(str).str.replace(",", ""),
     errors="coerce"
 )
+DEFAULT_TARGET_SALE = 19_92_00_000 # fallback target
 
-# ---------- Month–Year selector based on daily data ----------
+# ---------- Month selector + monthly target ----------
 
 df["year_month"] = df[date_col].dt.to_period("M")
 available_periods = sorted(df["year_month"].unique().tolist())
@@ -150,27 +161,21 @@ if not available_periods:
     st.error("No valid dates in Dashboard sheet.")
     st.stop()
 
-default_period = available_periods[-1]
-
 selected_period = st.selectbox(
     "Month",
     options=available_periods,
-    index=available_periods.index(default_period),
+    index=len(available_periods) - 1,
     format_func=ym_label,
 )
 
-# ---------- Determine target for selected month ----------
-
-sel_year = selected_period.year
 sel_month = selected_period.month
-
 row_target = target_df[target_df["month_num"] == sel_month]
 if not row_target.empty and not pd.isna(row_target["TARGET_SALE"].iloc[0]):
     TARGET_SALE = row_target["TARGET_SALE"].iloc[0]
 else:
-    TARGET_SALE = DEFAULT_TARGET_SALE # fallback
+    TARGET_SALE = DEFAULT_TARGET_SALE
 
-# ---------- Filter df to selected month ----------
+# ---------- Metrics for selected month ----------
 
 df_month = df[df["year_month"] == selected_period]
 if df_month.empty:
@@ -1331,3 +1336,4 @@ st.components.v1.html(html_template, height=900, scrolling=True)
 # """
 
 # st.components.v1.html(html_template, height=900, scrolling=True)
+
