@@ -126,31 +126,25 @@ for c in df.columns:
 
 df = df.dropna(subset=[date_col]).sort_values(date_col)
 
-# ---------- Month–Year selector (bottom logic, but we define first) ----------
+# ---------- Month–Year selector logic ----------
 
 df["year_month"] = df[date_col].dt.to_period("M")
 available_periods = sorted(df["year_month"].unique().tolist())
 
-# Use latest month as default
-default_period = available_periods[-1] if available_periods else None
-
-# Human labels like "Nov 2025"
 def ym_label(p):
     return p.strftime("%b %Y")
 
-# We keep selected month in session so metrics use it before UI renders
+default_period = available_periods[-1] if available_periods else None
+
 if "selected_ym" not in st.session_state:
     st.session_state["selected_ym"] = default_period
 
 selected_period = st.session_state["selected_ym"]
-
-# If somehow None, fall back to first
 if selected_period is None and available_periods:
     selected_period = available_periods[-1]
     st.session_state["selected_ym"] = selected_period
 
-# ---------- Filter DF to selected month ----------
-
+# filter dashboard df
 df_month = df[df["year_month"] == selected_period]
 if df_month is None or df_month.empty:
     df_month = df.copy()
@@ -293,16 +287,20 @@ rej_df_month = rej_df[rej_df["year_month"] == selected_period]
 if rej_df_month is None or rej_df_month.empty:
     rej_df_month = rej_df.copy()
 
-# ---------- SALE TREND GRAPH ----------
+# ---------- SALE TREND GRAPH (with safe gradient) ----------
 
 sale_df_month["sale_lakh"] = sale_df_month["sale amount"] / 100000.0
 
-bar_gradients = pc.n_colors(
-    "rgb(34,139,230)",
-    "rgb(79,223,253)",
-    len(sale_df_month),
-    colortype="rgb",
-)
+n_bars = len(sale_df_month)
+if n_bars <= 1:
+    bar_gradients = ["rgb(34,139,230)"] * max(n_bars, 1)
+else:
+    bar_gradients = pc.n_colors(
+        "rgb(34,139,230)",
+        "rgb(79,223,253)",
+        n_bars,
+        colortype="rgb",
+    )
 
 fig_sale = go.Figure()
 fig_sale.add_trace(
@@ -438,8 +436,6 @@ html_template = f"""
 <meta charset="utf-8">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700;900&display=swap" rel="stylesheet">
 <style>
-
-/* same CSS as your original cards ... (kept unchanged) */
 :root {{
     --blue1: #8ad1ff;
     --blue2: #4ca0ff;
@@ -669,14 +665,13 @@ body {{
 </html>
 """
 
-# Render dashboard first
+# Render dashboard
 st.components.v1.html(html_template, height=900, scrolling=True)
 
 # ---------- Month–Year selector BELOW dashboard ----------
 
 st.markdown("### Select month for dashboard")
 
-# simple selectbox with month labels
 new_period = st.selectbox(
     "Month",
     options=available_periods,
@@ -1321,6 +1316,7 @@ if new_period != selected_period:
 # """
 
 # st.components.v1.html(html_template, height=900, scrolling=True)
+
 
 
 
