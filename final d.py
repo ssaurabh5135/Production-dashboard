@@ -137,6 +137,7 @@ else:
 
 label_map = {p: p.strftime("%b %Y") for p in unique_periods}
 
+st.write("")
 selected_period = st.selectbox(
     "Select month",
     options=unique_periods,
@@ -1305,6 +1306,7 @@ st.components.v1.html(html_template, height=900, scrolling=True)
 # """
 
 # st.components.v1.html(html_template, height=900, scrolling=True)
+
 
 
 
