@@ -442,7 +442,7 @@ body {{
     backdrop-filter: blur(12px) saturate(180%);
     background: rgba(255,255,255,0.08);
     border: 1px solid rgba(255,255,255,0.15);
-    box-shadow: 0 0 15px rgba(255,255,255,0.28), 0 10px 30px rgba(0,0,0,0.5), inset 0 0 20px rgba(255,255,255,0.12);
+    # box-shadow: 0 0 15px rgba(255,255,255,0.28), 0 10px 30px rgba(0,0,0,0.5), inset 0 0 20px rgba(255,255,255,0.12);
     overflow: hidden;
 }}
 
@@ -632,6 +632,7 @@ body {{
 """
 
 st.components.v1.html(html_template, height=900, scrolling=True)
+
 
 
 
