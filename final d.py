@@ -14,7 +14,7 @@ IMAGE_PATH = "black.jpg"
 SPREADSHEET_ID = "168UoOWdTfOBxBvy_4QGymfiIRimSO2OoJdnzBDRPLvk"
 DASHBOARD_SHEET = "Dashboard"
 SALES_REPORT_SHEET = "Sales Report"
-TARGET_SALE = 19_92_00_000 # yearly target in ₹
+TARGET_SALE = 16_68_00_000 # yearly target in ₹
 
 # ---------- Helpers ----------
 
@@ -632,6 +632,7 @@ body {{
 """
 
 st.components.v1.html(html_template, height=900, scrolling=True)
+
 
 
 
