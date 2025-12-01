@@ -452,7 +452,7 @@ body {{
     background: linear-gradient(180deg, var(--blue1), var(--blue2), var(--blue3));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    text-shadow: 0px 4px 6px rgba(0,153,255,0.6), 0px 12px 22px rgba(0,78,255,0.55), 0px 18px 40px rgba(0,40,140,0.9);
+    # text-shadow: 0px 4px 6px rgba(0,153,255,0.6), 0px 12px 22px rgba(0,78,255,0.55), 0px 18px 40px rgba(0,40,140,0.9);
 }}
 
 .value-orange {{
@@ -461,7 +461,7 @@ body {{
     background: linear-gradient(180deg, var(--orange1), var(--orange2), var(--orange3));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    text-shadow: 0px 4px 6px rgba(255,165,0,0.6), 0px 12px 22px rgba(255,90,0,0.55), 0px 18px 40px rgba(255,50,0,0.9);
+    # text-shadow: 0px 4px 6px rgba(255,165,0,0.6), 0px 12px 22px rgba(255,90,0,0.55), 0px 18px 40px rgba(255,50,0,0.9);
 }}
 
 .value-green {{
@@ -470,7 +470,7 @@ body {{
     background: linear-gradient(180deg, var(--green1), var(--green2));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    text-shadow: 0px 4px 6px rgba(0,255,180,0.6), 0px 12px 22px rgba(0,160,100,0.55), 0px 18px 40px rgba(0,120,80,0.9);
+    # text-shadow: 0px 4px 6px rgba(0,255,180,0.6), 0px 12px 22px rgba(0,160,100,0.55), 0px 18px 40px rgba(0,120,80,0.9);
 }}
 
 .title-black {{
@@ -632,6 +632,7 @@ body {{
 """
 
 st.components.v1.html(html_template, height=900, scrolling=True)
+
 
 
 
