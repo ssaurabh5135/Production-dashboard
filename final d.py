@@ -424,7 +424,7 @@ body {{
     padding: 60px 60px 0 60px !important;
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
-    grid-template-rows: 130px 220px 140px 140px;
+    grid-template-rows: 130px 130px 140px 140px;
     gap: 24px;
     max-width: 1700px;
     max-height: 900px;
@@ -632,6 +632,7 @@ body {{
 """
 
 st.components.v1.html(html_template, height=900, scrolling=True)
+
 
 
 
