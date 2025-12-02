@@ -343,7 +343,7 @@ body {{
 <!-- ... other cards omitted for brevity - fill in exactly as you had ... -->
 <div class="card">
     <canvas class="snow-bg" id="snowspeed"></canvas>
-    <div class="gauge-wrapper">{gauge_html}</div>
+    # <div class="gauge-wrapper">{gauge_html}</div>
 </div>
 <!-- Add your sale and rejection charts cards here -->
 </div></body></html>
@@ -1008,6 +1008,7 @@ st.markdown(f"### Selected Month: {selected_month} | Achievement %: {achieved_pc
 # """
 
 # st.components.v1.html(html_template, height=900, scrolling=True)
+
 
 
 
