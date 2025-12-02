@@ -14,6 +14,8 @@ SPREADSHEET_ID = "168UoOWdTfOBxBvy_4QGymfiIRimSO2OoJdnzBDRPLvk"
 DASHBOARD_SHEET = "Dashboard"
 SALES_REPORT_SHEET = "Sales Report"
 
+# Helper functions from your original code
+
 def load_image_base64(path: str) -> str:
     try:
         data = Path(path).read_bytes()
@@ -21,22 +23,62 @@ def load_image_base64(path: str) -> str:
     except Exception:
         return ""
 
-# Your helper functions format_inr, ensure_pct, and find_col as per your original code...
+def format_inr(n):
+    try:
+        x = str(int(float(str(n).replace(",", ""))))
+    except Exception:
+        return str(n)
+    if len(x) <= 3:
+        return x
+    last3 = x[-3:]
+    rest = x[:-3]
+    rest = ''.join(
+        [rest[::-1][i:i+2][::-1] + ',' for i in range(0, len(rest), 2)][::-1]
+    )
+    return rest + last3
+
+def ensure_pct(x):
+    try:
+        v = float(str(x).replace("%", "").replace(",", ""))
+    except Exception:
+        return 0.0
+    return v * 100 if v <= 5 else v
+
+def find_col(df, target):
+    norm_target = (
+        target.lower()
+        .replace(" ", "")
+        .replace("%", "")
+        .replace("(", "")
+        .replace(")", "")
+    )
+    for c in df.columns:
+        norm_c = (
+            str(c).lower()
+            .replace(" ", "")
+            .replace("%", "")
+            .replace("(", "")
+            .replace(")", "")
+        )
+        if norm_c == norm_target:
+            return c
+    return None
 
 def load_monthly_targets(sheet):
     vals = sheet.get_values('A10:B12')
-    month_to_target = {}
+    monthly_targets = {}
     for row in vals[1:]:
         if len(row) >= 2:
-            m = row[0].strip()
+            month = row[0].strip()
             try:
-                t = float(row[1].replace(",", ""))
+                target = float(row[1].replace(",", ""))
             except Exception:
-                t = 1 # Prevent zero division
-            month_to_target[m] = t if t > 0 else 1
-    return month_to_target
+                target = 1
+            monthly_targets[month] = target if target > 0 else 1
+    return monthly_targets
 
-# Authenticate and open Google Sheets
+# Google Sheets Auth and loading data
+
 try:
     creds_info = st.secrets["gcp_service_account"]
     SCOPES = [
@@ -55,7 +97,7 @@ except Exception as e:
     st.error(f"Cannot open spreadsheet: {e}")
     st.stop()
 
-# Read dashboard sheet
+# Load dashboard sheet
 try:
     dash_ws = sh.worksheet(DASHBOARD_SHEET)
     rows = dash_ws.get_values()
@@ -73,8 +115,6 @@ dash_data = [dict(zip(header, r)) for r in data_rows]
 df = pd.DataFrame(dash_data)
 df.columns = df.columns.astype(str)
 
-# Find all needed columns as per your find_col method
-
 date_col = find_col(df, "date")
 today_col = find_col(df, "today's sale") or find_col(df, "todays sale")
 oee_col = find_col(df, "oee %") or find_col(df, "oee")
@@ -83,12 +123,13 @@ rej_day_col = find_col(df, "rejection amount (daybefore)") or find_col(df, "reje
 rej_pct_col = find_col(df, "rejection %") or find_col(df, "rejection")
 rej_cum_col = find_col(df, "rejection amount (cumulative)") or find_col(df, "rejection amount cumulative")
 total_cum_col = find_col(df, "total sales (cumulative)") or find_col(df, "total sales cumulative")
-copq_col = find_col(df, "copq")
-copq_cum_col = find_col(df, "copq cumulative") or find_col(df, "copqcumulative")
 
 if not all([date_col, today_col, oee_col, plan_col, rej_day_col, rej_pct_col, rej_cum_col, total_cum_col]):
     st.error("One or more required dashboard columns are missing in Google Sheet.")
     st.stop()
+
+copq_col = find_col(df, "copq")
+copq_cum_col = find_col(df, "copq cumulative") or find_col(df, "copqcumulative")
 
 df[date_col] = pd.to_datetime(df[date_col], errors="coerce")
 for c in df.columns:
@@ -96,7 +137,7 @@ for c in df.columns:
         df[c] = pd.to_numeric(df[c].astype(str).str.replace(",", ""), errors="coerce")
 df = df.dropna(subset=[date_col]).sort_values(date_col)
 
-# Read sales report sheet, parse backup Sale_summery and Rejection_summery tables
+# Load sales report sheet
 try:
     sr_ws = sh.worksheet(SALES_REPORT_SHEET)
     sr_rows = sr_ws.get_values()
@@ -131,21 +172,18 @@ rej_df = rej_df.dropna(subset=["date"]).sort_values("date")
 month_targets = load_monthly_targets(dash_ws)
 month_options = sorted(month_targets.keys(), key=lambda m: pd.to_datetime(m, format='%b').month)
 
-# Month selection dropdown only with target months (e.g. Nov, Dec)
 selected_month = st.selectbox("Select Month", options=month_options, index=0)
 selected_month_num = pd.to_datetime(selected_month, format='%b').month
 
-# Filter sale and rejection data for selected month
 filtered_sale_df = sale_df[sale_df["date"].dt.month == selected_month_num]
 filtered_rej_df = rej_df[rej_df["date"].dt.month == selected_month_num]
 
-# Calculate total sales and achievement percentage for selected month
 total_sales = filtered_sale_df["sale amount"].sum() if not filtered_sale_df.empty else 0
 target_sale = month_targets.get(selected_month, 1)
+target_sale = target_sale if target_sale > 0 else 1
 
 achievement_pct = round(total_sales / target_sale * 100, 2)
 
-# Prepare color gradients safely for sale chart
 num_colors = max(len(filtered_sale_df), 2)
 bar_gradients = pc.n_colors("rgb(34,139,230)", "rgb(79,223,253)", num_colors, colortype="rgb")
 
@@ -153,7 +191,7 @@ fig_sale = go.Figure()
 fig_sale.add_trace(
     go.Bar(
         x=filtered_sale_df["date"],
-        y=filtered_sale_df["sale amount"] / 100000.0, # convert to lakhs
+        y=filtered_sale_df["sale amount"] / 100000.0,
         marker_color=bar_gradients,
         marker_line_width=0,
         opacity=0.97,
@@ -165,20 +203,8 @@ fig_sale.update_layout(
     paper_bgcolor="rgba(0,0,0,0)",
     plot_bgcolor="rgba(0,0,0,0)",
     height=105,
-    xaxis=dict(
-        showgrid=False,
-        tickfont=dict(size=10),
-        tickangle=-45,
-        automargin=True,
-        tickformat="%d",
-        dtick="D1",
-    ),
-    yaxis=dict(
-        showgrid=False,
-        tickfont=dict(size=10),
-        automargin=True,
-        title="Lakh",
-    ),
+    xaxis=dict(showgrid=False, tickfont=dict(size=10), tickangle=-45, automargin=True, tickformat="%d", dtick="D1"),
+    yaxis=dict(showgrid=False, tickfont=dict(size=10), automargin=True, title="Lakh"),
 )
 
 rej_lakh = filtered_rej_df["rej amt"] / 1000.0
@@ -211,26 +237,13 @@ fig_rej.update_layout(
     plot_bgcolor="rgba(0,0,0,0)",
     height=105,
     showlegend=False,
-    xaxis=dict(
-        showgrid=False,
-        tickfont=dict(size=10),
-        tickangle=-45,
-        automargin=True,
-        tickformat="%d",
-        dtick="D1",
-    ),
-    yaxis=dict(
-        showgrid=False,
-        tickfont=dict(size=10),
-        automargin=True,
-        title="K",
-    ),
+    xaxis=dict(showgrid=False, tickfont=dict(size=10), tickangle=-45, automargin=True, tickformat="%d", dtick="D1"),
+    yaxis=dict(showgrid=False, tickfont=dict(size=10), automargin=True, title="K"),
 )
 
 sale_html = fig_sale.to_html(include_plotlyjs="cdn", full_html=False)
 rej_html = fig_rej.to_html(include_plotlyjs="cdn", full_html=False)
 
-# Gauge
 gauge = go.Figure(
     go.Indicator(
         mode="gauge+number",
@@ -251,12 +264,12 @@ gauge = go.Figure(
         },
     )
 )
-gauge.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(t=5, b=5, l=5, r=5), height=130)
+gauge.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(t=5,b=5,l=5,r=5), height=130)
 gauge_html = gauge.to_html(include_plotlyjs="cdn", full_html=False)
 
 bg_b64 = load_image_base64(IMAGE_PATH)
 
-# Format values for display
+# Use most recent values for display
 latest = df.iloc[-1]
 top_today_sale = format_inr(latest[today_col])
 top_oee = f"{round(ensure_pct(latest[oee_col]), 1)}%"
@@ -267,7 +280,22 @@ total_cum_disp = format_inr(latest[total_cum_col])
 copq_display = format_inr(latest[copq_col]) if copq_col and pd.notna(latest[copq_col]) else "..."
 copq_cum_display = format_inr(latest[copq_cum_col]) if copq_cum_col and pd.notna(latest[copq_cum_col]) else "..."
 
-# Render your original dashboard HTML but inject updated chart htmls and KPI display variables
+st.markdown(f"""
+<style>
+body, .stApp {{
+    background-size: cover !important;
+    background-position: center center !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+}}
+.block-container {{
+    padding: 0 !important;
+    margin: 0 !important;
+}}
+</style>
+""", unsafe_allow_html=True)
+
 html_template = f"""
 <!doctype html>
 <html><head><meta charset="utf-8"><link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700;900&display=swap" rel="stylesheet"><style>
@@ -467,8 +495,12 @@ body {{
 
 st.components.v1.html(html_template, height=900, scrolling=True)
 
-# Show achievement percentage info below the dashboard
-st.markdown(f"### Selected Month: {selected_month} | Achievement %: {achievement_pct}%")
+# Month selector below dashboard visualizations
+st.markdown("---")
+selected_month2 = st.selectbox("Select Month for Data View", options=month_options, index=0)
+
+# Show achievement % for selected month
+st.markdown(f"### Selected Month: {selected_month2} | Achievement Percentage: {round(achievement_pct, 2)}%")
 
 # #######################################
 
@@ -1105,6 +1137,7 @@ st.markdown(f"### Selected Month: {selected_month} | Achievement %: {achievement
 # """
 
 # st.components.v1.html(html_template, height=900, scrolling=True)
+
 
 
 
