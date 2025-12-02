@@ -8,13 +8,10 @@ import gspread
 from google.oauth2.service_account import Credentials
 
 st.set_page_config(page_title="Factory Dashboard (Exact Layout)", layout="wide")
-
 IMAGE_PATH = "black.jpg"
 SPREADSHEET_ID = "168UoOWdTfOBxBvy_4QGymfiIRimSO2OoJdnzBDRPLvk"
 DASHBOARD_SHEET = "Dashboard"
 SALES_REPORT_SHEET = "Sales Report"
-
-# Helper functions
 
 def load_image_base64(path: str) -> str:
     try:
@@ -74,16 +71,13 @@ def load_monthly_targets(sheet):
                 target = float(row[1].replace(",", ""))
             except Exception:
                 target = 1
-            monthly_targets[month] = target if target > 0 else 1
+            monthly_targets[month] = max(target, 1)
     return monthly_targets
 
-# Google Sheets Authentication and opening
+# Google Sheets Authentication
 try:
     creds_info = st.secrets["gcp_service_account"]
-    SCOPES = [
-        "https://www.googleapis.com/auth/spreadsheets",
-        "https://www.googleapis.com/auth/drive",
-    ]
+    SCOPES = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
     creds = Credentials.from_service_account_info(creds_info, scopes=SCOPES)
     client = gspread.authorize(creds)
 except Exception as e:
@@ -96,7 +90,6 @@ except Exception as e:
     st.error(f"Cannot open spreadsheet: {e}")
     st.stop()
 
-# Load dashboard data
 try:
     dash_ws = sh.worksheet(DASHBOARD_SHEET)
     rows = dash_ws.get_values()
@@ -114,7 +107,6 @@ dash_data = [dict(zip(header, r)) for r in data_rows]
 df = pd.DataFrame(dash_data)
 df.columns = df.columns.astype(str)
 
-# Identify columns
 date_col = find_col(df, "date")
 today_col = find_col(df, "today's sale") or find_col(df, "todays sale")
 oee_col = find_col(df, "oee %") or find_col(df, "oee")
@@ -126,18 +118,16 @@ total_cum_col = find_col(df, "total sales (cumulative)") or find_col(df, "total 
 copq_col = find_col(df, "copq")
 copq_cum_col = find_col(df, "copq cumulative") or find_col(df, "copqcumulative")
 
-required_cols = [date_col, today_col, oee_col, plan_col, rej_day_col, rej_pct_col, rej_cum_col, total_cum_col]
-if not all(required_cols):
+if not all([date_col, today_col, oee_col, plan_col, rej_day_col, rej_pct_col, rej_cum_col, total_cum_col]):
     st.error("One or more required dashboard columns are missing in Google Sheet.")
     st.stop()
 
 df[date_col] = pd.to_datetime(df[date_col], errors="coerce")
-for c in df.columns:
-    if c != date_col:
-        df[c] = pd.to_numeric(df[c].astype(str).str.replace(",", ""), errors="coerce")
+for col in df.columns:
+    if col != date_col:
+        df[col] = pd.to_numeric(df[col].astype(str).str.replace(",", ""), errors="coerce")
 df = df.dropna(subset=[date_col]).sort_values(date_col)
 
-# Load sales report data
 try:
     sr_ws = sh.worksheet(SALES_REPORT_SHEET)
     sr_rows = sr_ws.get_values()
@@ -146,7 +136,6 @@ except Exception:
 
 sale_records = []
 rej_records = []
-
 for r in sr_rows[1:]:
     if len(r) >= 3:
         date_str = (r[0] or "").strip()
@@ -171,65 +160,57 @@ rej_df["date"] = pd.to_datetime(rej_df["date"], errors="coerce")
 rej_df["rej amt"] = pd.to_numeric(rej_df["rej amt"].astype(str).str.replace(",", ""), errors="coerce").fillna(0)
 rej_df = rej_df.dropna(subset=["date"]).sort_values("date")
 
-# Load monthly targets
 month_targets = load_monthly_targets(dash_ws)
-month_options = sorted(month_targets.keys(), key=lambda m: pd.to_datetime(m, format='%b').month)
+month_options = sorted(month_targets.keys(), key=lambda x: pd.to_datetime(x, format='%b').month)
 
-# Month selection dropdown (single selector)
-selected_month = st.selectbox("Select Month", options=month_options, index=0)
+selected_month = st.selectbox("Select Month", month_options, index=0)
 selected_month_num = pd.to_datetime(selected_month, format='%b').month
 
-# Filter all data for selected month
 df_filtered = df[df[date_col].dt.month == selected_month_num]
 sale_filtered = sale_df[sale_df["date"].dt.month == selected_month_num]
 rej_filtered = rej_df[rej_df["date"].dt.month == selected_month_num]
 
-# Calculate KPIs from filtered df
 if not df_filtered.empty:
     latest = df_filtered.iloc[-1]
     today_sale = latest[today_col]
-    raw_oee = latest[oee_col]
-    oee = ensure_pct(raw_oee)
+    oee = ensure_pct(latest[oee_col])
+    raw_rej_pct = latest[rej_pct_col]
+    rej_pct = ensure_pct(raw_rej_pct)
     rej_day_amount = latest[rej_day_col]
-    rej_pct = ensure_pct(latest[rej_pct_col])
-    rej_cum = df_filtered[rej_cum_col].dropna()
-    rej_cum_val = rej_cum.iloc[-1] if not rej_cum.empty else 0
-    total_cum = df_filtered[total_cum_col].dropna()
-    total_cum_val = total_cum.iloc[-1] if not total_cum.empty else 0
+    rej_cum_series = df_filtered[rej_cum_col].dropna()
+    rej_cum_val = rej_cum_series.iloc[-1] if not rej_cum_series.empty else 0
+    total_cum_series = df_filtered[total_cum_col].dropna()
+    total_cum_val = total_cum_series.iloc[-1] if not total_cum_series.empty else 0
     copq_display = format_inr(latest[copq_col]) if copq_col and pd.notna(latest[copq_col]) else "..."
     copq_cum_display = format_inr(latest[copq_cum_col]) if copq_cum_col and pd.notna(latest[copq_cum_col]) else "..."
 else:
-    # Fallbacks if no data for month
     today_sale = 0
     oee = 0
-    rej_day_amount = 0
     rej_pct = 0
+    rej_day_amount = 0
     rej_cum_val = 0
     total_cum_val = 0
     copq_display = "..."
     copq_cum_display = "..."
 
-# Calculate achievement % from filtered sales and monthly target (guard against zero)
 total_sales_filtered = sale_filtered["sale amount"].sum() if not sale_filtered.empty else 0
 target_sale = month_targets.get(selected_month, 1)
 if target_sale <= 0:
     target_sale = 1
-achievement_pct = round(total_sales_filtered / target_sale * 100, 2) if target_sale else 0
+achieved_pct_val = round(total_sales_filtered / target_sale * 100, 2)
 
-# Prepare sale trend graph
 num_colors = max(len(sale_filtered), 2)
 bar_gradients = pc.n_colors("rgb(34,139,230)", "rgb(79,223,253)", num_colors, colortype="rgb")
 
 fig_sale = go.Figure()
-fig_sale.add_trace(
-    go.Bar(
-        x=sale_filtered["date"],
-        y=sale_filtered["sale amount"] / 100000.0,
-        marker_color=bar_gradients,
-        marker_line_width=0,
-        opacity=0.97,
-        hovertemplate="Date: %{x|%d-%b}<br>Sale: %{y:.2f} Lakh<extra></extra>",
-    )
+fig_sale.add_trace(go.Bar(
+    x=sale_filtered["date"],
+    y=sale_filtered["sale amount"] / 100000.0,
+    marker_color=bar_gradients,
+    marker_line_width=0,
+    opacity=0.97,
+    hovertemplate="Date: %{x|%d-%b}<br>Sale: %{y:.2f} Lakh<extra></extra>",
+))
 )
 fig_sale.update_layout(
     margin=dict(t=5, b=30, l=10, r=10),
@@ -252,31 +233,27 @@ fig_sale.update_layout(
     ),
 )
 
-# Prepare rejection trend graph
 rej_lakh = rej_filtered["rej amt"] / 1000.0
 fig_rej = go.Figure()
-fig_rej.add_trace(
-    go.Scatter(
-        x=rej_filtered["date"],
-        y=rej_lakh,
-        mode="lines+markers",
-        marker=dict(size=8, color="#fc7d1b", line=dict(width=1.5, color="#fff")),
-        line=dict(width=5, color="#fc7d1b", shape="spline"),
-        hoverinfo="x+y",
-        opacity=1,
-        hovertemplate="Date: %{x|%d-%b}<br>Rejection: %{y:.2f} K<extra></extra>",
-    )
+fig_rej.add_trace(go.Scatter(
+    x=rej_filtered["date"],
+    y=rej_lakh,
+    mode="lines+markers",
+    marker=dict(size=8, color="#fc7d1b", line=dict(width=1.5, color="#fff")),
+    line=dict(width=5, color="#fc7d1b", shape="spline"),
+    hoverinfo="x+y",
+    opacity=1,
+    hovertemplate="Date: %{x|%d-%b}<br>Rejection: %{y:.2f} K<extra></extra>",
+))
 )
-fig_rej.add_trace(
-    go.Scatter(
-        x=rej_filtered["date"],
-        y=rej_lakh,
-        mode="lines",
-        line=dict(width=15, color="rgba(252,125,27,0.13)", shape="spline"),
-        hoverinfo="skip",
-        opacity=1,
-    )
-)
+fig_rej.add_trace(go.Scatter(
+    x=rej_filtered["date"],
+    y=rej_lakh,
+    mode="lines",
+    line=dict(width=15, color="rgba(252,125,27,0.13)", shape="spline"),
+    hoverinfo="skip",
+    opacity=1,
+))
 fig_rej.update_layout(
     margin=dict(t=5, b=30, l=10, r=10),
     paper_bgcolor="rgba(0,0,0,0)",
@@ -302,31 +279,32 @@ fig_rej.update_layout(
 sale_html = fig_sale.to_html(include_plotlyjs="cdn", full_html=False)
 rej_html = fig_rej.to_html(include_plotlyjs="cdn", full_html=False)
 
-# Gauge indicator for achievement %
-gauge = go.Figure(
-    go.Indicator(
-        mode="gauge+number",
-        value=achievement_pct,
-        number={
-            "suffix": "%",
-            "font": {"size": 36, "color": "#009e4f", "family": "Poppins", "weight": "bold"},
+gauge = go.Figure(go.Indicator(
+    mode="gauge+number",
+    value=achieved_pct_val,
+    number={
+        "suffix": "%",
+        "font": {"size": 36, "color": "#009e4f", "family": "Poppins", "weight": "bold"},
+    },
+    domain={"x": [0, 1], "y": [0, 1]},
+    gauge={
+        "shape": "angular",
+        "axis": {
+            "range": [0, 100],
+            "tickvals": [0, 25, 50, 75, 100],
+            "ticktext": ["0%", "25%", "50%", "75%", "100%"],
         },
-        domain={"x": [0,1], "y": [0,1]},
-        gauge={
-            "shape": "angular",
-            "axis": {"range": [0, 100], "tickvals": [0,25,50,75,100], "ticktext": ["0%","25%","50%","75%","100%"]},
-            "bar": {"color": "#009e4f", "thickness": 0.35},
-            "bgcolor": "rgba(0,0,0,0)",
-            "steps": [
-                {"range": [0, 60], "color": "#c4eed1"},
-                {"range": [60, 85], "color": "#7ee2b7"},
-                {"range": [85, 100], "color": "#009e4f"},
-            ],
-            "threshold": {"line": {"color": "#111", "width": 4}, "value": achievement_pct},
-        },
-    )
-)
-gauge.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(t=5,b=5,l=5,r=5), height=130)
+        "bar": {"color": "#009e4f", "thickness": 0.35},
+        "bgcolor": "rgba(0,0,0,0)",
+        "steps": [
+            {"range": [0, 60], "color": "#c4eed1"},
+            {"range": [60, 85], "color": "#7ee2b7"},
+            {"range": [85, 100], "color": "#009e4f"},
+        ],
+        "threshold": {"line": {"color": "#111", "width": 4}, "value": achieved_pct_val},
+    },
+))
+gauge.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(t=5, b=5, l=5, r=5), height=130)
 gauge_html = gauge.to_html(include_plotlyjs="cdn", full_html=False)
 
 bg_b64 = load_image_base64(IMAGE_PATH)
@@ -338,7 +316,8 @@ left_rej_pct = f"{rej_pct:.1f}%"
 bottom_rej_cum = format_inr(rej_cum_val)
 total_cum_disp = format_inr(total_cum_val)
 
-st.markdown(f"""
+st.markdown(
+f"""
 <style>
 body, .stApp {{
     background-size: cover !important;
@@ -352,11 +331,14 @@ body, .stApp {{
     margin: 0 !important;
 }}
 </style>
-""", unsafe_allow_html=True)
+""",
+unsafe_allow_html=True,
+)
 
 html_template = f"""
 <!doctype html>
-<html><head><meta charset="utf-8"><link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700;900&display=swap" rel="stylesheet"><style>
+<html><head><meta charset="utf-8"><link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
 :root {{
     --blue1: #8ad1ff;
     --blue2: #4ca0ff;
@@ -468,8 +450,7 @@ body {{
     justify-content: center;
     overflow: hidden;
 }}
-</style></head><body><div class="container">
-<!-- Row 1 -->
+</style></head><body><div class="container"><!-- Row 1 -->
 <div class="card">
     <canvas class="snow-bg" id="snowsale"></canvas>
     <div class="center-content">
@@ -550,7 +531,6 @@ body {{
     </div>
 </div>
 </div></body></html>"""
-
 st.components.v1.html(html_template, height=900, scrolling=True)
 
 # #######################################
@@ -1188,6 +1168,7 @@ st.components.v1.html(html_template, height=900, scrolling=True)
 # """
 
 # st.components.v1.html(html_template, height=900, scrolling=True)
+
 
 
 
