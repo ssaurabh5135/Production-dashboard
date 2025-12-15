@@ -341,6 +341,8 @@ def render_dashboard(selected_month):
     left_rej_pct = f"{rej_pct:.1f}%"
     bottom_rej_cum = format_inr(rej_cum_val)
     total_cum_disp = format_inr(total_cum_val)
+    inventory_val = dash_ws.acell("K2").value
+    inventory_disp = format_inr(inventory_val) if inventory_val else "0"
 
     # Render dashboard html
     st.markdown(
@@ -552,9 +554,10 @@ def render_dashboard(selected_month):
         </div>
     </div>
     <div class="card">
-        <canvas class="snow-bg" id="snowempty"></canvas>
+        <canvas class="snow-bg" id="snowinventory"></canvas>
         <div class="center-content">
-            <div class="value-blue">&nbsp;</div>
+            <div class="value-blue">₹ {inventory_disp}</div>
+            <div class="title-black">Inventory Value</div>
         </div>
     </div></body></html>
     """
@@ -1200,6 +1203,7 @@ render_dashboard(selected_month)
 # """
 
 # st.components.v1.html(html_template, height=900, scrolling=True)
+
 
 
 
