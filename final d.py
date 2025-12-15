@@ -552,12 +552,10 @@ def render_dashboard(selected_month):
         </div>
     </div>
     <div class="card">
-        <canvas class="snow-bg" id="snowinventory"></canvas>
+        <canvas class="snow-bg" id="snowempty"></canvas>
         <div class="center-content">
-            <div class="value-blue">₹ {inventory_val}</div>
-            <div class="title-black">Inventory Value</div>
+            <div class="value-blue">&nbsp;</div>
         </div>
-    </div>
     </div></body></html>
     """
     st.components.v1.html(html_template, height=900, scrolling=True)
@@ -1202,6 +1200,7 @@ render_dashboard(selected_month)
 # """
 
 # st.components.v1.html(html_template, height=900, scrolling=True)
+
 
 
 
