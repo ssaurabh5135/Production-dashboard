@@ -549,7 +549,7 @@ def render_dashboard(selected_month):
     <div class="card">
         <canvas class="snow-bg" id="snowrejcum"></canvas>
         <div class="center-content">
-            <div class="value-orange">{bottom_rej_cum}</div>
+            <div class="value-orange">₹ {bottom_rej_cum}</div>
             <div class="title-black">Rejection Cumulative</div>
         </div>
     </div>
@@ -1203,6 +1203,7 @@ render_dashboard(selected_month)
 # """
 
 # st.components.v1.html(html_template, height=900, scrolling=True)
+
 
 
 
