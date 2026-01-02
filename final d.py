@@ -569,6 +569,7 @@ selected_month = st.selectbox("Select Month to View Data for", month_options, in
 render_dashboard(selected_month)
 
 
+
 #################################the below code is working till dec end 
 
 # import streamlit as st
@@ -1776,6 +1777,7 @@ render_dashboard(selected_month)
 # """
 
 # st.components.v1.html(html_template, height=900, scrolling=True)
+
 
 
 
