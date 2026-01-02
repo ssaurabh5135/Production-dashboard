@@ -6,7 +6,8 @@ import base64
 from pathlib import Path
 import gspread
 from google.oauth2.service_account import Credentials
-import datetime
+import calendar
+from datetime import datetime
 
 st.set_page_config(page_title="Factory Dashboard (Exact Layout)", layout="wide")
 
@@ -15,7 +16,6 @@ SPREADSHEET_ID = "168UoOWdTfOBxBvy_4QGymfiIRimSO2OoJdnzBDRPLvk"
 DASHBOARD_SHEET = "Dashboard"
 SALES_REPORT_SHEET = "Sales Report"
 
-# -------------------- Helper Functions --------------------
 def load_image_base64(path: str) -> str:
     try:
         data = Path(path).read_bytes()
@@ -64,7 +64,7 @@ def find_col(df, target):
             return c
     return None
 
-# -------------------- Google Sheets Authentication --------------------
+# Google Sheets Auth
 try:
     creds_info = st.secrets["gcp_service_account"]
     SCOPES = [
@@ -83,7 +83,6 @@ except Exception as e:
     st.error(f"Cannot open spreadsheet: {e}")
     st.stop()
 
-# -------------------- Load Dashboard Sheet --------------------
 try:
     dash_ws = sh.worksheet(DASHBOARD_SHEET)
     rows = dash_ws.get_values()
@@ -101,7 +100,6 @@ dash_data = [dict(zip(header, r)) for r in data_rows]
 df = pd.DataFrame(dash_data)
 df.columns = df.columns.astype(str)
 
-# -------------------- Identify Columns --------------------
 date_col = find_col(df, "date")
 today_col = find_col(df, "today's sale") or find_col(df, "todays sale")
 oee_col = find_col(df, "oee %") or find_col(df, "oee")
@@ -110,21 +108,20 @@ rej_day_col = find_col(df, "rejection amount (daybefore)") or find_col(df, "reje
 rej_pct_col = find_col(df, "rejection %") or find_col(df, "rejection")
 rej_cum_col = find_col(df, "rejection amount (cumulative)") or find_col(df, "rejection amount cumulative")
 total_cum_col = find_col(df, "total sales (cumulative)") or find_col(df, "total sales cumulative")
-copq_col = find_col(df, "copq")
-copq_cum_col = find_col(df, "copq cumulative") or find_col(df, "copqcumulative")
 
 if not all([date_col, today_col, oee_col, plan_col, rej_day_col, rej_pct_col, rej_cum_col, total_cum_col]):
     st.error("One or more required dashboard columns are missing in Google Sheet.")
     st.stop()
 
-# -------------------- Clean Data --------------------
+copq_col = find_col(df, "copq")
+copq_cum_col = find_col(df, "copq cumulative") or find_col(df, "copqcumulative")
+
 df[date_col] = pd.to_datetime(df[date_col], errors="coerce")
 for c in df.columns:
     if c != date_col:
         df[c] = pd.to_numeric(df[c].astype(str).str.replace(",", ""), errors="coerce")
 df = df.dropna(subset=[date_col]).sort_values(date_col)
 
-# -------------------- Load Sales Report Sheet --------------------
 try:
     sr_ws = sh.worksheet(SALES_REPORT_SHEET)
     sr_rows = sr_ws.get_values()
@@ -159,18 +156,18 @@ rej_df["date"] = pd.to_datetime(rej_df["date"], errors="coerce")
 rej_df["rej amt"] = pd.to_numeric(rej_df["rej amt"].astype(str).str.replace(",", ""), errors="coerce").fillna(0)
 rej_df = rej_df.dropna(subset=["date"]).sort_values("date")
 
-# -------------------- Load Monthly Target Sale --------------------
+# Load monthly TARGET_SALE from Dashboard sheet A10:B12
 month_targets_vals = dash_ws.get_values('A10:B12')
 month_targets = {
     row[0].strip(): float(row[1].replace(",", "")) if len(row) > 1 and row[1].strip() else 1
     for row in month_targets_vals[1:] if len(row) >= 2
 }
 
-# -------------------- Month Selector Handling (Fixed for Post-December) --------------------
-month_options = sorted(month_targets.keys(), key=lambda m: pd.to_datetime(m, format='%b'))
-current_month_name = datetime.datetime.now().strftime("%b")
-default_index = month_options.index(current_month_name) if current_month_name in month_options else len(month_options)-1
-# -------------------- Dashboard Rendering Function --------------------
+# Ensure all months are always present
+month_options = list(calendar.month_abbr)[1:]  # ['Jan', 'Feb', ..., 'Dec']
+current_month = datetime.now().strftime('%b')
+default_index = month_options.index(current_month) if current_month in month_options else 0
+# Main dashboard rendering
 def render_dashboard(selected_month):
     selected_month_num = pd.to_datetime(selected_month, format='%b').month
 
@@ -178,7 +175,6 @@ def render_dashboard(selected_month):
     sale_filtered = sale_df[sale_df["date"].dt.month == selected_month_num]
     rej_filtered = rej_df[rej_df["date"].dt.month == selected_month_num]
 
-    # --------------- Latest Values ---------------
     if not df_filtered.empty:
         latest = df_filtered.iloc[-1]
         today_sale = latest[today_col]
@@ -201,14 +197,13 @@ def render_dashboard(selected_month):
         copq_display = "..."
         copq_cum_display = "..."
 
-    # --------------- Achievement % ---------------
     total_sales_filtered = sale_filtered["sale amount"].sum() if not sale_filtered.empty else 0
     target_sale = month_targets.get(selected_month, 1)
     if target_sale <= 0:
         target_sale = 1
     achieved_pct_val = round(total_sales_filtered / target_sale * 100, 2)
 
-    # -------------------- Sale Trend Chart --------------------
+    # Sale Trend Graph Color handling
     num_colors = max(len(sale_filtered), 2)
     bar_gradients = pc.n_colors(
         "rgb(34,139,230)",
@@ -248,7 +243,6 @@ def render_dashboard(selected_month):
         ),
     )
 
-    # -------------------- Rejection Trend Chart --------------------
     rej_lakh = rej_filtered["rej amt"] / 1000.0
     fig_rej = go.Figure()
     fig_rej.add_trace(
@@ -298,7 +292,6 @@ def render_dashboard(selected_month):
     sale_html = fig_sale.to_html(include_plotlyjs="cdn", full_html=False)
     rej_html = fig_rej.to_html(include_plotlyjs="cdn", full_html=False)
 
-    # -------------------- Gauge Chart --------------------
     BUTTERFLY_ORANGE = "#fc7d1b"
     GREEN = "#009e4f"
 
@@ -308,12 +301,21 @@ def render_dashboard(selected_month):
             value=achieved_pct_val,
             number={
                 "suffix": "%",
-                "font": {"size": 36, "color": GREEN, "family": "Poppins", "weight": "bold"},
+                "font": {
+                    "size": 36,
+                    "color": GREEN,
+                    "family": "Poppins",
+                    "weight": "bold",
+                },
             },
             domain={"x": [0, 1], "y": [0, 1]},
             gauge={
                 "shape": "angular",
-                "axis": {"range": [0, 100], "tickvals": [0, 25, 50, 75, 100], "ticktext": ["0%", "25%", "50%", "75%", "100%"]},
+                "axis": {
+                    "range": [0, 100],
+                    "tickvals": [0, 25, 50, 75, 100],
+                    "ticktext": ["0%", "25%", "50%", "75%", "100%"],
+                },
                 "bar": {"color": GREEN, "thickness": 0.35},
                 "bgcolor": "rgba(0,0,0,0)",
                 "steps": [
@@ -321,7 +323,10 @@ def render_dashboard(selected_month):
                     {"range": [60, 85], "color": "#7ee2b7"},
                     {"range": [85, 100], "color": GREEN},
                 ],
-                "threshold": {"line": {"color": "#111", "width": 4}, "value": achieved_pct_val},
+                "threshold": {
+                    "line": {"color": "#111", "width": 4},
+                    "value": achieved_pct_val,
+                },
             },
         )
     )
@@ -333,10 +338,7 @@ def render_dashboard(selected_month):
     )
     gauge_html = gauge.to_html(include_plotlyjs="cdn", full_html=False)
 
-    # -------------------- Load Background --------------------
     bg_b64 = load_image_base64(IMAGE_PATH)
-
-    # -------------------- Format Values for Display --------------------
     top_today_sale = format_inr(today_sale)
     top_oee = f"{round(oee if pd.notna(oee) else 0, 1)}%"
     left_rej_amt = format_inr(rej_day_amount)
@@ -346,7 +348,7 @@ def render_dashboard(selected_month):
     inventory_val = dash_ws.acell("K2").value
     inventory_disp = format_inr(inventory_val) if inventory_val else "0"
 
-    # -------------------- HTML Dashboard --------------------
+    # Render dashboard html
     st.markdown(
         f"""
     <style>
@@ -368,66 +370,53 @@ def render_dashboard(selected_month):
 
     html_template = f"""
     <!doctype html>
-    <html>
-    <head>
-    <meta charset="utf-8">
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700;900&display=swap" rel="stylesheet">
-    <style>
+    <html><head><meta charset="utf-8"><link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700;900&display=swap" rel="stylesheet"><style>
     :root {{
-        --blue1: #8ad1ff; --blue2: #4ca0ff; --blue3: #0d6efd;
-        --orange1: #ffd699; --orange2: #ff9334; --orange3: #ff6a00;
-        --green1: #a6ffd9; --green2: #00d97e;
+        --blue1: #8ad1ff;
+        --blue2: #4ca0ff;
+        --blue3: #0d6efd;
+        --orange1: #ffd699;
+        --orange2: #ff9334;
+        --orange3: #ff6a00;
+        --green1: #a6ffd9;
+        --green2: #00d97e;
     }}
-    body {{ margin:0; padding:0; font-family: "Fredoka", sans-serif; background:none !important; }}
-    .container {{
-        box-sizing: border-box; width:100%; height:100vh; padding:60px 60px 0 60px; display:grid;
-        grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 130px 130px 140px 140px; gap:24px;
-        max-width:1700px; max-height:900px; margin:auto;
-    }}
-    .card {{
-        position: relative; border-radius:20px; padding:0; display:flex; flex-direction:column;
-        justify-content:center; align-items:center; backdrop-filter:blur(12px) saturate(180%);
-        background: rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15);
-        box-shadow:0 0 15px rgba(255,255,255,0.28),0 10px 30px rgba(0,0,0,0.5), inset 0 0 20px rgba(255,255,255,0.12);
-        overflow:hidden;
-    }}
-    .value-blue {{ font-size:42px; font-weight:900; background: linear-gradient(180deg, var(--blue1), var(--blue2), var(--blue3)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }}
-    .value-orange {{ font-size:42px; font-weight:900; background: linear-gradient(180deg, var(--orange1), var(--orange2), var(--orange3)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }}
-    .value-green {{ font-size:42px; font-weight:900; background: linear-gradient(180deg, var(--green1), var(--green2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }}
-    .title-black {{ color:#5c5c63; font-size:17px; font-weight:800; margin-top:6px; text-align:center; }}
-    .chart-title-black {{ position:absolute; top:8px; left:12px; color:#fff; font-size:15px; font-weight:700; z-index:10; }}
-    .chart-container {{ width:100%; height:100%; display:block; padding:25px 5px 5px 5px; box-sizing:border-box; }}
-    .center-content {{ display:flex; flex-direction:column; align-items:center; width:100%; z-index:5; }}
-    .gauge-wrapper {{ width:100%; height:100%; display:flex; align-items:center; justify-content:center; overflow:hidden; }}
-    </style>
-    </head>
-    <body>
-    <div class="container">
-        <!-- Row 1 -->
-        <div class="card"><div class="center-content"><div class="value-blue">₹ {top_today_sale}</div><div class="title-black">Yesterday's Sale</div></div></div>
-        <div class="card"><div class="center-content"><div class="value-orange">₹ {left_rej_amt}</div><div class="title-black">Rejection Amount</div></div></div>
-        <div class="card"><div class="center-content"><div class="value-blue">{top_oee}</div><div class="title-black">OEE %</div></div></div>
-        <!-- Row 2 -->
-        <div class="card"><div class="center-content"><div class="value-blue">₹ {total_cum_disp}</div><div class="title-black">Sale Cumulative</div></div></div>
-        <div class="card"><div class="center-content"><div class="value-orange">{left_rej_pct}</div><div class="title-black">Rejection %</div></div></div>
-        <div class="card"><div class="center-content"><div class="value-blue">₹ {copq_display}</div><div class="title-black">COPQ Last Day</div></div></div>
-        <!-- Row 3 -->
-        <div class="card"><div class="chart-title-black">Sale Trend</div><div class="chart-container">{sale_html}</div></div>
-        <div class="card"><div class="chart-title-black">Rejection Trend</div><div class="chart-container">{rej_html}</div></div>
-        <div class="card"><div class="center-content"><div class="value-blue">₹ {copq_cum_display}</div><div class="title-black">COPQ Cumulative</div></div></div>
-        <!-- Row 4 -->
-        <div class="card"><div class="gauge-wrapper">{gauge_html}</div></div>
-        <div class="card"><div class="center-content"><div class="value-orange">₹ {bottom_rej_cum}</div><div class="title-black">Rejection Cumulative</div></div></div>
-        <div class="card"><div class="center-content"><div class="value-blue">₹ {inventory_disp}</div><div class="title-black">Inventory Value</div></div></div>
-    </div>
-    </body>
-    </html>
+    body {{ margin: 0; padding: 0; font-family: "Fredoka", sans-serif; background: none !important; }}
+    .container {{ box-sizing: border-box; width: 100%; height: 100vh; padding: 60px 60px 0 60px !important; display: grid; grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 130px 130px 140px 140px; gap: 24px; max-width: 1700px; max-height: 900px; margin: auto; }}
+    .card {{ position: relative; border-radius: 20px; padding: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; backdrop-filter: blur(12px) saturate(180%); background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); box-shadow: 0 0 15px rgba(255,255,255,0.28), 0 10px 30px rgba(0,0,0,0.5), inset 0 0 20px rgba(255,255,255,0.12); overflow: hidden; }}
+    .value-blue {{ font-size: 42px !important; font-weight: 900; background: linear-gradient(180deg, var(--blue1), var(--blue2), var(--blue3)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }}
+    .value-orange {{ font-size: 42px !important; font-weight: 900; background: linear-gradient(180deg, var(--orange1), var(--orange2), var(--orange3)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }}
+    .value-green {{ font-size: 42px !important; font-weight: 900; background: linear-gradient(180deg, var(--green1), var(--green2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }}
+    .title-black {{ color: #5c5c63 !important; font-size: 17px; font-weight: 800; margin-top: 6px; text-align: center; }}
+    .chart-title-black {{ position: absolute; top: 8px; left: 12px; color: #fff !important; font-size: 15px; font-weight: 700; z-index: 10; }}
+    .chart-container {{ width: 100%; height: 100%; display: block; padding:25px 5px 5px 5px; box-sizing: border-box; }}
+    .snow-bg {{ position: absolute; left: 0; top: 0; width: 100%; height: 100%; opacity: 0.5; pointer-events: none; }}
+    .center-content {{ display: flex; flex-direction: column; align-items: center; width: 100%; z-index: 5; }}
+    .gauge-wrapper {{ width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; }}
+    </style></head><body><div class="container">
+    <!-- Row 1 -->
+    <div class="card"><div class="center-content"><div class="value-blue">₹ {top_today_sale}</div><div class="title-black">Yesterday's Sale</div></div></div>
+    <div class="card"><div class="center-content"><div class="value-orange">₹ {left_rej_amt}</div><div class="title-black">Rejection Amount</div></div></div>
+    <div class="card"><div class="center-content"><div class="value-blue">{top_oee}</div><div class="title-black">OEE %</div></div></div>
+    <!-- Row 2 -->
+    <div class="card"><div class="center-content"><div class="value-blue">₹ {total_cum_disp}</div><div class="title-black">Sale Cumulative</div></div></div>
+    <div class="card"><div class="center-content"><div class="value-orange">{left_rej_pct}</div><div class="title-black">Rejection %</div></div></div>
+    <div class="card"><div class="center-content"><div class="value-blue">₹ {copq_display}</div><div class="title-black">COPQ Last Day</div></div></div>
+    <!-- Row 3 -->
+    <div class="card"><div class="chart-title-black">Sale Trend</div><div class="chart-container">{sale_html}</div></div>
+    <div class="card"><div class="chart-title-black">Rejection Trend</div><div class="chart-container">{rej_html}</div></div>
+    <div class="card"><div class="center-content"><div class="value-blue">₹ {copq_cum_display}</div><div class="title-black">COPQ Cumulative</div></div></div>
+    <!-- Row 4 -->
+    <div class="card"><div class="gauge-wrapper">{gauge_html}</div></div>
+    <div class="card"><div class="center-content"><div class="value-orange">₹ {bottom_rej_cum}</div><div class="title-black">Rejection Cumulative</div></div></div>
+    <div class="card"><div class="center-content"><div class="value-blue">₹ {inventory_disp}</div><div class="title-black">Inventory Value</div></div></div>
+    </div></body></html>
     """
-
     st.components.v1.html(html_template, height=900, scrolling=True)
 
-# -------------------- Month Selector --------------------
+# Month selector
 selected_month = st.selectbox("Select Month to View Data for", month_options, index=default_index)
+
 render_dashboard(selected_month)
 
 
@@ -1639,6 +1628,7 @@ render_dashboard(selected_month)
 # """
 
 # st.components.v1.html(html_template, height=900, scrolling=True)
+
 
 
 
