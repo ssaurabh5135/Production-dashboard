@@ -154,7 +154,7 @@ rej_df["date"] = pd.to_datetime(rej_df["date"], errors="coerce")
 rej_df["rej amt"] = pd.to_numeric(rej_df["rej amt"].astype(str).str.replace(",", ""), errors="coerce").fillna(0)
 rej_df = rej_df.dropna(subset=["date"]).sort_values("date")
 
-# Load monthly TARGET_SALE from Dashboard sheet A10:B13 (extended for Jan)
+# Load monthly TARGET_SALE from Dashboard sheet A10:B13 (UPDATED for January)
 month_targets_vals = dash_ws.get_values('A10:B13')
 month_targets = {
     row[0].strip(): float(row[1].replace(",", "")) if len(row) > 1 and row[1].strip() else 1
@@ -567,6 +567,7 @@ def render_dashboard(selected_month):
 selected_month = st.selectbox("Select Month to View Data for", month_options, index=len(month_options)-1)
 
 render_dashboard(selected_month)
+
 
 
 
@@ -1777,6 +1778,7 @@ render_dashboard(selected_month)
 # """
 
 # st.components.v1.html(html_template, height=900, scrolling=True)
+
 
 
 
