@@ -281,75 +281,200 @@ def render_dashboard(selected_month):
     total_cum_disp = format_inr(total_cum_val)
     inventory_val = dash_ws.acell("K2").value
     inventory_disp = format_inr(inventory_val) if inventory_val else "0"
+    # Main dashboard rendering
+def render_dashboard(selected_month):
+    # Filter for selected month (month-year format)
+    selected_month_dt = pd.to_datetime(selected_month, format='%b-%Y')
+    selected_month_num = selected_month_dt.month
+    selected_year = selected_month_dt.year
 
-    # HTML/CSS Dashboard
-    st.markdown(f"""
-    <style>
-    body, .stApp {{ background-size: cover !important; background-position: center center !important; margin:0 !important; padding:0 !important; overflow:hidden !important; }}
-    .block-container {{padding:0 !important; margin:0 !important;}}
-    .container {{
-        box-sizing:border-box;
-        width:100%;
-        height:100vh;
-        padding:60px 60px 0 60px !important;
-        display:grid;
-        grid-template-columns:1fr 1fr 1fr;
-        grid-template-rows:130px 130px 140px 140px;
-        gap:24px;
-        max-width:1700px;
-        max-height:900px;
-        margin:auto;
-    }}
-    .card {{
-        position:relative;
-        border-radius:20px;
-        padding:0;
-        display:flex;
-        flex-direction:column;
-        justify-content:center;
-        align-items:center;
-        backdrop-filter:blur(12px) saturate(180%);
-        background:rgba(255,255,255,0.08);
-        border:1px solid rgba(255,255,255,0.15);
-        box-shadow:0 0 15px rgba(255,255,255,0.28),0 10px 30px rgba(0,0,0,0.5),inset 0 0 20px rgba(255,255,255,0.12);
-        overflow:hidden;
-    }}
-    .value-blue{{ font-size:42px !important; font-weight:900; background: linear-gradient(180deg,#8ad1ff,#4ca0ff,#0d6efd); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }}
-    .value-orange{{ font-size:42px !important; font-weight:900; background: linear-gradient(180deg,#ffd699,#ff9334,#ff6a00); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }}
-    .value-green{{ font-size:42px !important; font-weight:900; background: linear-gradient(180deg,#a6ffd9,#00d97e); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }}
-    .title-black{{ color:#5c5c63 !important; font-size:17px; font-weight:800; margin-top:6px; text-align:center; }}
-    .chart-title-black{{ position:absolute; top:8px; left:12px; color:#fff !important; font-size:15px; font-weight:700; z-index:10; }}
-    .chart-container{{ width:100%; height:100%; display:block; padding:25px 5px 5px 5px; box-sizing:border-box; }}
-    .center-content{{ display:flex; flex-direction:column; align-items:center; width:100%; z-index:5; }}
-    .gauge-wrapper{{ width:100%; height:100%; display:flex; align-items:center; justify-content:center; overflow:hidden; }}
-    </style>
-    """, unsafe_allow_html=True)
+    df_filtered = df[(df[date_col].dt.month == selected_month_num) & (df[date_col].dt.year == selected_year)]
+    sale_filtered = sale_df[(sale_df["date"].dt.month == selected_month_num) & (sale_df["date"].dt.year == selected_year)]
+    rej_filtered = rej_df[(rej_df["date"].dt.month == selected_month_num) & (rej_df["date"].dt.year == selected_year)]
 
-    html_template = f"""
+    if not df_filtered.empty:
+        latest = df_filtered.iloc[-1]
+        today_sale = latest[today_col]
+        oee = ensure_pct(latest[oee_col])
+        rej_day_amount = latest[rej_day_col]
+        rej_pct = ensure_pct(latest[rej_pct_col])
+        rej_cum_series = df_filtered[rej_cum_col].dropna()
+        rej_cum_val = rej_cum_series.iloc[-1] if not rej_cum_series.empty else 0
+        total_cum_series = df_filtered[total_cum_col].dropna()
+        total_cum_val = total_cum_series.iloc[-1] if not total_cum_series.empty else 0
+        copq_display = format_inr(latest[copq_col]) if copq_col and pd.notna(latest[copq_col]) else "..."
+        copq_cum_display = format_inr(latest[copq_cum_col]) if copq_cum_col and pd.notna(latest[copq_cum_col]) else "..."
+    else:
+        today_sale = 0
+        oee = 0
+        rej_day_amount = 0
+        rej_pct = 0
+        rej_cum_val = 0
+        total_cum_val = 0
+        copq_display = "..."
+        copq_cum_display = "..."
+
+    # Speedometer % calculation
+    total_sales_filtered = sale_filtered["sale amount"].sum() if not sale_filtered.empty else 0
+    target_sale = month_targets.get(selected_month, 1)
+    if target_sale <= 0:
+        target_sale = 1
+    achieved_pct_val = round(total_sales_filtered / target_sale * 100, 2)
+    achieved_pct_val = min(achieved_pct_val, 100)  # Cap at 100%
+
+    # Sale Trend Chart
+    num_colors = max(len(sale_filtered), 2)
+    bar_gradients = pc.n_colors("rgb(34,139,230)", "rgb(79,223,253)", num_colors, colortype="rgb")
+    fig_sale = go.Figure()
+    fig_sale.add_trace(
+        go.Bar(
+            x=sale_filtered["date"],
+            y=sale_filtered["sale amount"] / 100000.0,
+            marker_color=bar_gradients,
+            marker_line_width=0,
+            opacity=0.97,
+            hovertemplate="Date: %{x|%d-%b}<br>Sale: %{y:.2f} Lakh<extra></extra>",
+        )
+    )
+    fig_sale.update_layout(
+        margin=dict(t=5, b=30, l=10, r=10),
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        height=105,
+        xaxis=dict(showgrid=False, tickfont=dict(size=10), tickangle=-45, automargin=True, tickformat="%d", dtick="D1"),
+        yaxis=dict(showgrid=False, tickfont=dict(size=10), automargin=True, title="Lakh"),
+    )
+
+    # Rejection Trend Chart
+    rej_lakh = rej_filtered["rej amt"] / 1000.0
+    fig_rej = go.Figure()
+    fig_rej.add_trace(
+        go.Scatter(
+            x=rej_filtered["date"],
+            y=rej_lakh,
+            mode="lines+markers",
+            marker=dict(size=8, color="#fc7d1b", line=dict(width=1.5, color="#fff")),
+            line=dict(width=5, color="#fc7d1b", shape="spline"),
+            hoverinfo="x+y",
+            opacity=1,
+            hovertemplate="Date: %{x|%d-%b}<br>Rejection: %{y:.2f} K<extra></extra>",
+        )
+    )
+    fig_rej.add_trace(
+        go.Scatter(
+            x=rej_filtered["date"],
+            y=rej_lakh,
+            mode="lines",
+            line=dict(width=15, color="rgba(252,125,27,0.13)", shape="spline"),
+            hoverinfo="skip",
+            opacity=1,
+        )
+    )
+    fig_rej.update_layout(
+        margin=dict(t=5, b=30, l=10, r=10),
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        height=105,
+        showlegend=False,
+        xaxis=dict(showgrid=False, tickfont=dict(size=10), tickangle=-45, automargin=True, tickformat="%d", dtick="D1"),
+        yaxis=dict(showgrid=False, tickfont=dict(size=10), automargin=True, title="K"),
+    )
+
+    sale_html = fig_sale.to_html(include_plotlyjs="cdn", full_html=False)
+    rej_html = fig_rej.to_html(include_plotlyjs="cdn", full_html=False)
+
+    # Speedometer Gauge
+    GREEN = "#009e4f"
+    gauge = go.Figure(
+        go.Indicator(
+            mode="gauge+number",
+            value=achieved_pct_val,
+            number={"suffix": "%", "font": {"size": 36, "color": GREEN, "family": "Poppins", "weight": "bold"}},
+            domain={"x": [0, 1], "y": [0, 1]},
+            gauge={
+                "shape": "angular",
+                "axis": {"range": [0, 100], "tickvals": [0, 25, 50, 75, 100], "ticktext": ["0%", "25%", "50%", "75%", "100%"]},
+                "bar": {"color": GREEN, "thickness": 0.35},
+                "bgcolor": "rgba(0,0,0,0)",
+                "steps": [{"range": [0, 60], "color": "#c4eed1"}, {"range": [60, 85], "color": "#7ee2b7"}, {"range": [85, 100], "color": GREEN}],
+                "threshold": {"line": {"color": "#111", "width": 4}, "value": achieved_pct_val},
+            },
+        )
+    )
+    gauge.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", margin=dict(t=5, b=5, l=5, r=5), height=130)
+    gauge_html = gauge.to_html(include_plotlyjs="cdn", full_html=False)
+
+    # Format values
+    top_today_sale = format_inr(today_sale)
+    top_oee = f"{round(oee if pd.notna(oee) else 0,1)}%"
+    left_rej_amt = format_inr(rej_day_amount)
+    left_rej_pct = f"{rej_pct:.1f}%"
+    bottom_rej_cum = format_inr(rej_cum_val)
+    total_cum_disp = format_inr(total_cum_val)
+    inventory_val = dash_ws.acell("K2").value
+    inventory_disp = format_inr(inventory_val) if inventory_val else "0"
+
+    # Full HTML + CSS (unchanged from working layout)
+    html_template = f""" 
+    <!doctype html>
+    <html><head><meta charset="utf-8"><link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700;900&display=swap" rel="stylesheet"><style>
+    body, .stApp {{
+        /* background: url("data:image/jpeg;base64,{load_image_base64(IMAGE_PATH)}") no-repeat center center fixed !important; */
+        background-size: cover !important;
+        background-position: center center !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+    }}
+    .block-container {{ padding:0 !important; margin:0 !important; }}
+    :root {{
+        --blue1: #8ad1ff;
+        --blue2: #4ca0ff;
+        --blue3: #0d6efd;
+        --orange1: #ffd699;
+        --orange2: #ff9334;
+        --orange3: #ff6a00;
+        --green1: #a6ffd9;
+        --green2: #00d97e;
+    }}
+    body {{ margin:0; padding:0; font-family:"Fredoka",sans-serif; background:none !important; }}
+    .container {{ box-sizing:border-box; width:100%; height:100vh; padding:60px 60px 0 60px !important; display:grid; grid-template-columns:1fr 1fr 1fr; grid-template-rows:130px 130px 140px 140px; gap:24px; max-width:1700px; max-height:900px; margin:auto; }}
+    .card {{ position:relative; border-radius:20px; padding:0; display:flex; flex-direction:column; justify-content:center; align-items:center; backdrop-filter:blur(12px) saturate(180%); background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); box-shadow:0 0 15px rgba(255,255,255,0.28),0 10px 30px rgba(0,0,0,0.5), inset 0 0 20px rgba(255,255,255,0.12); overflow:hidden; }}
+    .value-blue {{ font-size:42px !important; font-weight:900; background:linear-gradient(180deg,var(--blue1),var(--blue2),var(--blue3)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }}
+    .value-orange {{ font-size:42px !important; font-weight:900; background:linear-gradient(180deg,var(--orange1),var(--orange2),var(--orange3)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }}
+    .title-black {{ color:#5c5c63 !important; font-size:17px; font-weight:800; margin-top:6px; text-align:center; }}
+    .chart-title-black {{ position:absolute; top:8px; left:12px; color:#fff !important; font-size:15px; font-weight:700; z-index:10; }}
+    .chart-container {{ width:100%; height:100%; display:block; padding:25px 5px 5px 5px; box-sizing:border-box; }}
+    .snow-bg {{ position:absolute; left:0; top:0; width:100%; height:100%; opacity:0.5; pointer-events:none; }}
+    .center-content {{ display:flex; flex-direction:column; align-items:center; width:100%; z-index:5; }}
+    .gauge-wrapper {{ width:100%; height:100%; display:flex; align-items:center; justify-content:center; overflow:hidden; }}
+    </style></head><body>
     <div class="container">
     <!-- Row 1 -->
-    <div class="card"><div class="center-content"><div class="value-blue">₹ {top_today_sale}</div><div class="title-black">Yesterday's Sale</div></div></div>
-    <div class="card"><div class="center-content"><div class="value-orange">₹ {left_rej_amt}</div><div class="title-black">Rejection Amount</div></div></div>
-    <div class="card"><div class="center-content"><div class="value-blue">{top_oee}</div><div class="title-black">OEE %</div></div></div>
+    <div class="card"><canvas class="snow-bg"></canvas><div class="center-content"><div class="value-blue">₹ {top_today_sale}</div><div class="title-black">Yesterday's Sale</div></div></div>
+    <div class="card"><canvas class="snow-bg"></canvas><div class="center-content"><div class="value-orange">₹ {left_rej_amt}</div><div class="title-black">Rejection Amount</div></div></div>
+    <div class="card"><canvas class="snow-bg"></canvas><div class="center-content"><div class="value-blue">{top_oee}</div><div class="title-black">OEE %</div></div></div>
     <!-- Row 2 -->
-    <div class="card"><div class="center-content"><div class="value-blue">₹ {total_cum_disp}</div><div class="title-black">Sale Cumulative</div></div></div>
-    <div class="card"><div class="center-content"><div class="value-orange">{left_rej_pct}</div><div class="title-black">Rejection %</div></div></div>
-    <div class="card"><div class="center-content"><div class="value-blue">₹ {copq_display}</div><div class="title-black">COPQ Last Day</div></div></div>
+    <div class="card"><canvas class="snow-bg"></canvas><div class="center-content"><div class="value-blue">₹ {total_cum_disp}</div><div class="title-black">Sale Cumulative</div></div></div>
+    <div class="card"><canvas class="snow-bg"></canvas><div class="center-content"><div class="value-orange">{left_rej_pct}</div><div class="title-black">Rejection %</div></div></div>
+    <div class="card"><canvas class="snow-bg"></canvas><div class="center-content"><div class="value-blue">₹ {copq_display}</div><div class="title-black">COPQ Last Day</div></div></div>
     <!-- Row 3 -->
-    <div class="card"><div class="chart-title-black">Sale Trend</div><div class="chart-container">{sale_html}</div></div>
-    <div class="card"><div class="chart-title-black">Rejection Trend</div><div class="chart-container">{rej_html}</div></div>
-    <div class="card"><div class="center-content"><div class="value-blue">₹ {copq_cum_display}</div><div class="title-black">COPQ Cumulative</div></div></div>
+    <div class="card"><canvas class="snow-bg"></canvas><div class="chart-title-black">Sale Trend</div><div class="chart-container">{sale_html}</div></div>
+    <div class="card"><canvas class="snow-bg"></canvas><div class="chart-title-black">Rejection Trend</div><div class="chart-container">{rej_html}</div></div>
+    <div class="card"><canvas class="snow-bg"></canvas><div class="center-content"><div class="value-blue">₹ {copq_cum_display}</div><div class="title-black">COPQ Cumulative</div></div></div>
     <!-- Row 4 -->
-    <div class="card"><div class="gauge-wrapper">{gauge_html}</div></div>
-    <div class="card"><div class="center-content"><div class="value-orange">₹ {bottom_rej_cum}</div><div class="title-black">Rejection Cumulative</div></div></div>
-    <div class="card"><div class="center-content"><div class="value-blue">₹ {inventory_disp}</div><div class="title-black">Inventory Value</div></div></div>
-    </div>
+    <div class="card"><canvas class="snow-bg"></canvas><div class="gauge-wrapper">{gauge_html}</div></div>
+    <div class="card"><canvas class="snow-bg"></canvas><div class="center-content"><div class="value-orange">₹ {bottom_rej_cum}</div><div class="title-black">Rejection Cumulative</div></div></div>
+    <div class="card"><canvas class="snow-bg"></canvas><div class="center-content"><div class="value-blue">₹ {inventory_disp}</div><div class="title-black">Inventory Value</div></div></div>
+    </div></body></html>
     """
+
     st.components.v1.html(html_template, height=900, scrolling=True)
 
-# Month selector
-selected_month = st.selectbox("Select Month to View Data for", month_options, index=default_index)
+# Month Selector — last 3 months
+selected_month = st.selectbox("Select Month to View Data for", month_options, index=len(month_options)-1)
 render_dashboard(selected_month)
+
 
 
 
@@ -2797,6 +2922,7 @@ render_dashboard(selected_month)
 # # # """
 
 # # # st.components.v1.html(html_template, height=900, scrolling=True)
+
 
 
 
