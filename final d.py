@@ -419,6 +419,8 @@ def render_dashboard(selected_month):
             <div class="title-black">Yesterday's Sale (with kus)</div>
         </div>
     </div>
+
+    
     <div class="card">
         <canvas class="snow-bg" id="snowrej"></canvas>
         <div class="center-content">
@@ -426,6 +428,8 @@ def render_dashboard(selected_month):
             <div class="title-black">Rejection Amount</div>
         </div>
     </div>
+
+    
     <div class="card">
         <canvas class="snow-bg" id="snowoee"></canvas>
         <div class="center-content">
@@ -433,21 +437,9 @@ def render_dashboard(selected_month):
             <div class="title-black">OEE %</div>
         </div>
     </div>
-    <!-- Row 2 - ADDED TWO NEW CARDS HERE -->
-    <div class="card">
-        <canvas class="snow-bg" id="snowcumsale"></canvas>
-        <div class="center-content">
-            <div class="value-blue">₹ {total_cum_disp}</div>
-            <div class="title-black">Sale Cumulative (with kus)</div>
-        </div>
-    </div>
-    <div class="card">
-        <canvas class="snow-bg" id="snowyesterdaywokus"></canvas>
-        <div class="center-content">
-            <div class="value-blue">₹ {yesterday_sale_wokus_disp}</div>
-            <div class="title-black">Yesterday's Sale (w/o kus)</div>
-        </div>
-    </div>
+
+    
+    
     <div class="card">
         <canvas class="snow-bg" id="snowcumwokus"></canvas>
         <div class="center-content">
@@ -455,6 +447,8 @@ def render_dashboard(selected_month):
             <div class="title-black">Cumulative Sale (w/o kus)</div>
         </div>
     </div>
+
+    
     <div class="card">
         <canvas class="snow-bg" id="snowcopq"></canvas>
         <div class="center-content">
@@ -462,17 +456,23 @@ def render_dashboard(selected_month):
             <div class="title-black">COPQ Last Day</div>
         </div>
     </div>
+
+    
     <!-- Row 3 -->
     <div class="card">
         <canvas class="snow-bg" id="snowsalechart"></canvas>
         <div class="chart-title-black">Sale Trend</div>
         <div class="chart-container">{sale_html}</div>
     </div>
+
+    
     <div class="card">
         <canvas class="snow-bg" id="snowrejchart"></canvas>
         <div class="chart-title-black">Rejection Trend</div>
         <div class="chart-container">{rej_html}</div>
     </div>
+
+    
     <div class="card">
         <canvas class="snow-bg" id="snowcopqcum"></canvas>
         <div class="center-content">
@@ -485,6 +485,8 @@ def render_dashboard(selected_month):
         <canvas class="snow-bg" id="snowspeed"></canvas>
         <div class="gauge-wrapper">{gauge_html}</div>
     </div>
+
+    
     <div class="card">
         <canvas class="snow-bg" id="snowrejcum"></canvas>
         <div class="center-content">
@@ -492,12 +494,31 @@ def render_dashboard(selected_month):
             <div class="title-black">Rejection Cumulative</div>
         </div>
     </div>
+
+    
     <div class="card">
         <canvas class="snow-bg" id="snowinventory"></canvas>
         <div class="center-content">
             <div class="value-blue">₹ {inventory_disp}</div>
             <div class="title-black">Inventory Value</div>
         </div>
+        <!-- Row 2 - ADDED TWO NEW CARDS HERE -->
+     <div class="card">
+        <canvas class="snow-bg" id="snowcumsale"></canvas>
+        <div class="center-content">
+            <div class="value-blue">₹ {total_cum_disp}</div>
+            <div class="title-black">Sale Cumulative (with kus)</div>
+        </div>
+    </div>
+
+    
+    <div class="card">
+        <canvas class="snow-bg" id="snowyesterdaywokus"></canvas>
+        <div class="center-content">
+            <div class="value-blue">₹ {yesterday_sale_wokus_disp}</div>
+            <div class="title-black">Yesterday's Sale (w/o kus)</div>
+        </div>
+    </div>
     </div></body></html>
     """
     st.components.v1.html(html_template, height=950, scrolling=True)
@@ -3078,6 +3099,7 @@ render_dashboard(selected_month)
 # # # # """
 
 # # # # st.components.v1.html(html_template, height=900, scrolling=True)
+
 
 
 
