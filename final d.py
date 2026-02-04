@@ -410,7 +410,7 @@ def render_dashboard(selected_month):
         <canvas class="snow-bg" id="snowsale"></canvas>
         <div class="center-content">
             <div class="value-blue">₹ {top_today_sale}</div>
-            <div class="title-black">Yesterday's Sale</div>
+            <div class="title-black">Yesterday's Sale (with kus)</div>
         </div>
     </div>
     <div class="card">
@@ -432,7 +432,7 @@ def render_dashboard(selected_month):
         <canvas class="snow-bg" id="snowcumsale"></canvas>
         <div class="center-content">
             <div class="value-blue">₹ {total_cum_disp}</div>
-            <div class="title-black">Sale Cumulative</div>
+            <div class="title-black">Sale Cumulative (with kus)</div>
         </div>
     </div>
     <div class="card">
@@ -2567,6 +2567,7 @@ render_dashboard(selected_month)
 # # # # """
 
 # # # # st.components.v1.html(html_template, height=900, scrolling=True)
+
 
 
 
