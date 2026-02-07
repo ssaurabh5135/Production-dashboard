@@ -327,7 +327,7 @@ def render_dashboard(selected_month):
     cum_sale_wokus = dash_ws.acell("M2").value
     cum_sale_wokus_disp = format_inr(cum_sale_wokus) if cum_sale_wokus else "0"
     
-    # Render dashboard html - **FIXED: Put rejection cumulative in 4th row, 3rd column**
+    # Render dashboard html - **FIXED: Rejection % back, Rejection Cumulative in BLANK card (row 4, col 3)**
     st.markdown(
         f"""
     <style>
@@ -395,8 +395,8 @@ def render_dashboard(selected_month):
         <div class="value-blue">₹ {total_cum_disp}</div><div class="title-black">Cumulative Sale (with kus)</div></div></div>
     <div class="card"><canvas class="snow-bg" id="snowcumwokus"></canvas><div class="center-content">
         <div class="value-blue">₹ {cum_sale_wokus_disp}</div><div class="title-black">Cumulative Sale (w/o kus)</div></div></div>
-    <div class="card"><canvas class="snow-bg" id="snowrejcum"></canvas><div class="center-content">
-        <div class="value-orange">₹ {bottom_rej_cum}</div><div class="title-black">Rejection Cumulative</div></div></div>
+    <div class="card"><canvas class="snow-bg" id="snowach"></canvas><div class="center-content">
+        <div class="value-orange">{left_rej_pct}</div><div class="title-black">Rejection %</div></div></div>
     <div class="card"><canvas class="snow-bg" id="snowcopq"></canvas><div class="center-content">
         <div class="value-blue">₹ {copq_display}</div><div class="title-black">COPQ</div></div></div>
         
@@ -409,7 +409,9 @@ def render_dashboard(selected_month):
     <div class="card"><canvas class="snow-bg" id="snowspeed"></canvas><div class="gauge-wrapper">{gauge_html}</div></div>
     <div class="card"><canvas class="snow-bg" id="snowinventory"></canvas><div class="center-content">
         <div class="value-blue">₹ {inventory_disp}</div><div class="title-black">Inventory Value</div></div></div>
-    <div class="card"></div><div class="card"></div>
+    <div class="card"><canvas class="snow-bg" id="snowrejcum"></canvas><div class="center-content">
+        <div class="value-orange">₹ {bottom_rej_cum}</div><div class="title-black">Rejection Cumulative</div></div></div>
+    <div class="card"></div>
     
     </body></html>
     """
@@ -4522,6 +4524,7 @@ render_dashboard(selected_month)
 # # # # # """
 
 # # # # # st.components.v1.html(html_template, height=900, scrolling=True)
+
 
 
 
